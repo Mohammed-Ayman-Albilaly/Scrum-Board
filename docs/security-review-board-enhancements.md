@@ -58,3 +58,41 @@ No exploitable vulnerability found. Hardening in place:
   `"DOWN"`; anything else is a `400`. Edge nudges (top/bottom) are a safe no-op.
 - **Injection / XSS.** Drizzle-parameterized writes; the control renders as
   buttons, no user-supplied HTML. No finding.
+
+---
+
+## Structured ceremonies (`feat: structured ceremony UI` / `API`)
+
+Scope: `frontend/public/scripts/ceremonies.js` and
+`backend/src/features/ceremonies/{schema,validation,logic}.ts` (migration
+`0002_nifty_dormammu.sql` adds `ceremony.details`).
+
+### Finding — stored-XSS surface widened by new free-text fields — **Medium** — FIXED
+
+**Issue.** The feature adds eight new user-controlled text fields (blockers,
+goal, capacity, demoSummary, feedback, wentWell, needsImprovement, actionItems)
+that are persisted and later rendered on the board. Any field that skipped
+sanitization would be a stored-XSS vector.
+
+**Fix.** `createCeremony` routes **every** text field through `buildDetails`,
+which calls `sanitizeText` (strips all HTML) on each one before it is written;
+`committedPoints` is an integer, not text. The client also renders details with
+`el(...,{text})` (`textContent`). Covered by `tests/ceremonies.test.ts`
+(`<script>` payload is stripped).
+
+### Reviewed and acceptable
+
+- **RBAC.** Create stays `sameOriginOnly + requireRole(SCRUM_MASTER) +
+  mutationLimiter`; a Team Member/Product Owner gets `403`. Reads are all-roles.
+  No finding.
+- **JSON handling.** The `details` column only ever holds JSON produced by our
+  own `buildDetails` (an allow-listed, sanitized object) — never a raw
+  client-supplied JSON string — so `JSON.parse` on read cannot introduce
+  attacker-controlled structure, and no object merge/`__proto__` sink exists.
+  No finding.
+- **Input validation.** `type` is enum-checked; text fields are length-bounded;
+  `committedPoints` is a bounded integer; fields foreign to the submitted type
+  are dropped by `buildDetails`; unknown keys are stripped by `parseBody`.
+  No finding.
+- **Sprint linkage.** A supplied `sprintId` is checked to exist in the project
+  (`404` otherwise). No finding.
