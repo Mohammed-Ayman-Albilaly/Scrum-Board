@@ -66,7 +66,9 @@ function header(me) {
 function backlogPanel(stories, ctx) {
   const children = [el("h2", { class: "panel__title", text: "Product Backlog" })];
   if (can.editBacklog(ctx.role)) children.push(newStoryForm(ctx));
-  children.push(el("div", { class: "stack" }, stories.length ? stories.map((s) => renderStoryCard(s, ctx)) : [empty("No stories yet.")]));
+  children.push(el("div", { class: "stack" }, stories.length
+    ? stories.map((s, i) => renderStoryCard(s, ctx, { first: i === 0, last: i === stories.length - 1 }))
+    : [empty("No stories yet.")]));
   return el("section", { class: "panel panel--backlog" }, children);
 }
 

@@ -35,7 +35,7 @@ async function run(action, ctx) {
   }
 }
 
-function backlogControls(story, ctx) {
+function backlogControls(story, ctx, opts) {
   const status = el("select", { class: "card__control", title: "Status",
     onchange: (e) => run(() => api(`/stories/${story.id}`, { method: "PATCH", body: { status: e.target.value } }), ctx) },
     Object.keys(STATUS_BADGE).map((s) => el("option", { value: s, text: LABEL[s], selected: s === story.status })));
@@ -48,7 +48,10 @@ function backlogControls(story, ctx) {
   const edit = el("button", { class: "btn btn--ghost btn--sm", text: "✎", title: "Rename", onclick: () => renameStory(story, ctx) });
   const del = el("button", { class: "btn btn--ghost btn--sm", text: "🗑", title: "Delete",
     onclick: () => confirm("Delete this story?") && run(() => api(`/stories/${story.id}`, { method: "DELETE" }), ctx) });
-  return el("div", { class: "card__controls" }, [status, points, assign, edit, del]);
+  const reorder = (direction) => run(() => api(`/stories/${story.id}/reorder`, { method: "PATCH", body: { direction } }), ctx);
+  const up = el("button", { class: "btn btn--ghost btn--sm", text: "▲", title: "Move up", disabled: opts.first, onclick: () => reorder("UP") });
+  const down = el("button", { class: "btn btn--ghost btn--sm", text: "▼", title: "Move down", disabled: opts.last, onclick: () => reorder("DOWN") });
+  return el("div", { class: "card__controls" }, [up, down, status, points, assign, edit, del]);
 }
 
 function renameStory(story, ctx) {
@@ -104,7 +107,7 @@ export function renderStoryCard(story, ctx, opts = {}) {
   if (story.description) children.push(el("p", { class: "card__desc", text: story.description }));
   const tag = assigneeTag(story, ctx);
   if (tag) children.push(tag);
-  if (!opts.readOnly && !story.sprintId && can.editBacklog(ctx.role)) children.push(backlogControls(story, ctx));
+  if (!opts.readOnly && !story.sprintId && can.editBacklog(ctx.role)) children.push(backlogControls(story, ctx, opts));
   if (!opts.readOnly && !locked && can.assignStory(ctx.role)) children.push(assigneeControls(story, ctx));
   if (!opts.readOnly && story.sprintId && !locked && can.moveStory(ctx.role)) children.push(moveControls(story, ctx));
   return el("article", { class: "card" }, children);
