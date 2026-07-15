@@ -98,18 +98,36 @@ function sprintsPanel(sprints, ctx) {
 function newSprintForm(ctx) {
   const name = el("input", { class: "field-input", placeholder: "Sprint name", maxlength: "120" });
   const goal = el("input", { class: "field-input", placeholder: "Goal (optional)", maxlength: "2000" });
+  const start = el("input", { class: "field-input", type: "date", title: "Start date" });
+  const end = el("input", { class: "field-input", type: "date", title: "End date" });
   const create = async () => {
     if (!name.value.trim()) return;
     try {
-      await api("/sprints", { method: "POST", body: { name: name.value.trim(), goal: goal.value.trim() || undefined } });
-      name.value = ""; goal.value = "";
+      await api("/sprints", { method: "POST", body: {
+        name: name.value.trim(),
+        goal: goal.value.trim() || undefined,
+        startDate: start.value || undefined,
+        endDate: end.value || undefined,
+      } });
+      name.value = ""; goal.value = ""; start.value = ""; end.value = "";
       await ctx.reload();
     } catch (err) {
       toast(err.message, "error");
     }
   };
   const add = el("button", { class: "btn btn--primary btn--sm", text: "Create sprint", onclick: create });
-  return el("form", { class: "inline-form", onsubmit: (e) => { e.preventDefault(); create(); } }, [name, goal, add]);
+  return el("form", { class: "inline-form", onsubmit: (e) => { e.preventDefault(); create(); } }, [name, goal, start, end, add]);
+}
+
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function sprintDateRange(sp) {
+  if (sp.startDate && sp.endDate) return `${fmtDate(sp.startDate)} – ${fmtDate(sp.endDate)}`;
+  if (sp.startDate) return `from ${fmtDate(sp.startDate)}`;
+  if (sp.endDate) return `until ${fmtDate(sp.endDate)}`;
+  return null;
 }
 
 function sprintBlock(sp, ctx) {
@@ -118,6 +136,8 @@ function sprintBlock(sp, ctx) {
     el("span", { class: `badge badge--${sp.status === "CLOSED" ? "deployed" : "dev"}`, text: sp.status === "CLOSED" ? "Closed" : "Active" }),
   ];
   if (sp.goal) head.push(el("span", { class: "muted", text: sp.goal }));
+  const range = sprintDateRange(sp);
+  if (range) head.push(el("span", { class: "sprint__dates muted", text: range }));
   if (can.manageSprints(ctx.role) && sp.status === "ACTIVE") {
     head.push(el("button", { class: "btn btn--ghost btn--sm", text: "Close sprint", onclick: () => confirm(`Close ${sp.name}? Its columns lock.`) && closeSprint(sp.id, ctx) }));
   }
