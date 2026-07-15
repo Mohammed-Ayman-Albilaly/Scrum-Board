@@ -35,3 +35,26 @@ date cannot be before its start date."` Covered by `tests/sprint_dates.test.ts`.
   and `<input type="date">` constrains input to a date value. No finding.
 - **Sensitive data.** `serializeSprint` exposes only `id/name/goal/startDate/
   endDate/status`. No finding.
+
+---
+
+## Backlog reorder (`feat: add backlog reorder UI` / `API`)
+
+Scope: `backlogControls` in `frontend/public/scripts/cards.js` and
+`reorderStory` + `PATCH /stories/:id/reorder` in
+`backend/src/features/stories/{logic,routes,validation}.ts`.
+
+No exploitable vulnerability found. Hardening in place:
+
+- **RBAC.** The route uses the `po` guard chain
+  `[sameOriginOnly, requireRole(PRODUCT_OWNER), mutationLimiter]`; a Team Member
+  or Scrum Master gets `403`. Verified in `tests/reorder.test.ts`.
+- **Scope guard.** `reorderStory` rejects a story that belongs to a sprint
+  (`400 "Only backlog stories can be reordered."`), so the control can only
+  touch the product backlog, and `findStory` scopes by `projectId`.
+- **Atomicity.** The 0..n renumber runs inside `db.transaction`, so a failure
+  mid-renumber cannot leave the backlog with duplicated/partial priorities.
+- **Input validation.** `direction` is a `Type.Union` of the literals `"UP"`/
+  `"DOWN"`; anything else is a `400`. Edge nudges (top/bottom) are a safe no-op.
+- **Injection / XSS.** Drizzle-parameterized writes; the control renders as
+  buttons, no user-supplied HTML. No finding.
