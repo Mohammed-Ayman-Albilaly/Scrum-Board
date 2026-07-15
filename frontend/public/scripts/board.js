@@ -1,9 +1,11 @@
 // Board orchestrator: loads the current user + board data and renders the
 // three regions (backlog | sprints | deployed) plus the ceremonies panel.
-import { api, el, toast } from "./utils.js";
+import { api, el, toast, setProjectId } from "./utils.js";
 import { can, ROLE_LABELS } from "./permissions.js";
 import { renderStoryCard } from "./cards.js";
 import { renderCeremoniesPanel } from "./ceremonies.js";
+
+let activeProjectId = null;
 
 const SPRINT_COLS = [
   ["SPRINT_BACKLOG", "Sprint Backlog"],
@@ -23,6 +25,12 @@ async function load() {
     window.location.href = "/";
     return;
   }
+  const { projects } = await api("/projects");
+  if (!activeProjectId || !projects.some((p) => p.id === activeProjectId)) {
+    activeProjectId = projects[0]?.id ?? null;
+  }
+  setProjectId(activeProjectId);
+
   const [board, ceremonies, members] = await Promise.all([
     api("/board"),
     api("/ceremonies"),
@@ -30,6 +38,8 @@ async function load() {
   ]);
   const ctx = {
     role: me.role,
+    projects,
+    activeProjectId,
     sprints: board.sprints,
     activeSprints: board.sprints.filter((s) => s.status === "ACTIVE"),
     sprintsById: new Map(board.sprints.map((s) => [s.id, s])),
@@ -39,7 +49,7 @@ async function load() {
     reload: load,
   };
   app().replaceChildren(
-    header(me),
+    header(me, ctx),
     el("main", { class: "board" }, [
       backlogPanel(board.backlog, ctx),
       sprintsPanel(board.sprints, ctx),
@@ -49,18 +59,60 @@ async function load() {
   );
 }
 
-function header(me) {
+function header(me, ctx) {
   const logout = el("button", { class: "btn btn--ghost btn--sm", text: "Log out", onclick: async () => {
     try { await api("/auth/logout", { method: "POST" }); } finally { window.location.href = "/"; }
   } });
   return el("header", { class: "app-header" }, [
     el("div", { class: "landing__brand" }, [el("span", { class: "brand-mark", "aria-hidden": "true" }), el("span", { class: "brand-name", text: "ScrumBoard" })]),
+    projectBar(ctx),
     el("div", { class: "app-header__user" }, [
       el("span", { class: "user-name", text: me.name }),
       el("span", { class: "badge badge--ready", text: ROLE_LABELS[me.role] ?? me.role }),
       logout,
     ]),
   ]);
+}
+
+function projectBar(ctx) {
+  const select = el("select", { class: "card__control", title: "Active project",
+    onchange: (e) => switchProject(e.target.value) },
+    ctx.projects.map((p) => el("option", { value: p.id, text: p.name, selected: p.id === ctx.activeProjectId })));
+  const create = el("button", { class: "btn btn--ghost btn--sm", text: "+ Project", onclick: createProjectFlow });
+  const invite = el("button", { class: "btn btn--ghost btn--sm", text: "Invite", onclick: () => inviteFlow(ctx) });
+  return el("div", { class: "project-bar" }, [el("span", { class: "muted", text: "Project" }), select, create, invite]);
+}
+
+function switchProject(id) {
+  activeProjectId = id;
+  setProjectId(id);
+  load();
+}
+
+async function createProjectFlow() {
+  const name = window.prompt("New project name");
+  if (!name || !name.trim()) return;
+  try {
+    const { project } = await api("/projects", { method: "POST", body: { name: name.trim() } });
+    activeProjectId = project.id;
+    setProjectId(project.id);
+    await load();
+    toast(`Created "${project.name}"`, "success");
+  } catch (err) {
+    toast(err.message, "error");
+  }
+}
+
+async function inviteFlow(ctx) {
+  const email = window.prompt("Invite a teammate by email");
+  if (!email || !email.trim()) return;
+  try {
+    await api(`/projects/${ctx.activeProjectId}/members`, { method: "POST", body: { email: email.trim() } });
+    await load();
+    toast("Member added", "success");
+  } catch (err) {
+    toast(err.message, "error");
+  }
 }
 
 function backlogPanel(stories, ctx) {

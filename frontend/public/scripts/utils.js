@@ -7,9 +7,23 @@ export class ApiError extends Error {
   }
 }
 
+// The active project id, appended as ?projectId= to every scoped request so the
+// server knows which board to read/write. Auth + project-management calls are
+// left unscoped.
+let currentProjectId = null;
+export function setProjectId(id) {
+  currentProjectId = id;
+}
+
+function withProject(path) {
+  if (!currentProjectId || path.startsWith("/auth") || path.startsWith("/projects")) return path;
+  const sep = path.includes("?") ? "&" : "?";
+  return `${path}${sep}projectId=${encodeURIComponent(currentProjectId)}`;
+}
+
 /** Call the API. Returns `data` on success; throws ApiError otherwise. */
 export async function api(path, { method = "GET", body } = {}) {
-  const res = await fetch(path, {
+  const res = await fetch(withProject(path), {
     method,
     headers: body ? { "Content-Type": "application/json" } : undefined,
     credentials: "same-origin",
