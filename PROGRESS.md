@@ -38,44 +38,61 @@ earlier entry predated that commit; the table below reflects what is genuinely o
 | Auth (signup/login/logout/session) | ✅ | ✅ | ✅ | ✅ `auth.test.ts` | ✅ |
 | Board page shell (`GET /board` aggregate read) | ✅ | ✅ | ✅ | ✅ `board.test.ts` | ✅ |
 | Stories / product backlog (CRUD + move) | ✅ (`cards.js`) | ✅ (CRUD + `PATCH /stories/:id/move`, `/sprint`) | ✅ | ✅ `board.test.ts` | ✅ |
-| Sprints (create / close) | ✅ (`newSprintForm` in `board.js`) | ✅ | ✅ | ✅ `board.test.ts` (create/close + closed-sprint lock) | ✅ |
-| Ceremonies (log standup/planning/review/retro) | ✅ (`ceremonies.js`) | ✅ | ✅ | ✅ `board.test.ts` (RBAC + validation) | ✅ |
-| Projects (single shared project) | — by design | ✅ schema + `ensureDefaultProject()` seed | ✅ | ✅ via seed in `setup.ts` | ✅ |
+| Sprints (create / close, **+ start/end dates**) | ✅ (`newSprintForm` w/ date inputs + header range) | ✅ (range validated) | ✅ `security-review-board-enhancements.md` | ✅ `board.test.ts` + `sprint_dates.test.ts` (4) | ✅ |
+| Ceremonies (**structured** per-type fields) | ✅ (`ceremonies.js`, Retro 3-col board) | ✅ (`details` JSON, migration 0002) | ✅ `security-review-board-enhancements.md` | ✅ `ceremonies.test.ts` (7) | ✅ |
+| Backlog reorder (PO ▲/▼) | ✅ (`cards.js`) | ✅ `PATCH /stories/:id/reorder` (atomic renumber) | ✅ `security-review-board-enhancements.md` | ✅ `reorder.test.ts` (5) | ✅ |
+| **Multi-project** (create / invite / scope) | ✅ (project switcher + `+ Project` + Invite) | ✅ `GET/POST /projects`, `POST /projects/:id/members`, `requireProjectMember` (migration 0003) | ✅ `security-review-multi-project.md` | ✅ `projects.test.ts` (8) | ✅ |
 | Global Deployed list | ✅ (`deployedPanel`) | ✅ (part of `GET /board`) | ✅ | ✅ `board.test.ts` (backlog→deployed flow) | ✅ |
-| Story assignees (`GET /users` + `PATCH /stories/:id/assign`) | ✅ (tag + PO picker) | ✅ | ✅ `docs/security-review-assignees.md` | ✅ `assignees.test.ts` (8) | ✅ |
+| Story assignees (`GET /users` + `PATCH /stories/:id/assign`) | ✅ (tag + PO picker) | ✅ (assignee must be project member) | ✅ `docs/security-review-assignees.md` | ✅ `assignees.test.ts` (8) | ✅ |
 | CI pipeline | — | — | — | — | ✅ `.github/workflows/ci.yml` (typecheck + test) |
 
-**Multi-project note:** the PRD lists multi-project support as a constraint, but the current
-design deliberately scopes everything to one shared project (`DEFAULT_PROJECT_ID`). There is
-no create-project / invite-members API or UI. This is a known, intentional simplification —
-not a half-finished feature. Layering multiple projects on top of the existing `projectId`
-column is the natural future extension.
+**Multi-project (done 2026-07-15):** every user auto-enrolls in the shared `Team Project` on
+signup and can create more projects or invite existing users by email. A `project_member` join
+table + `requireProjectMember` middleware scope every board/story/sprint/ceremony/users request
+to a project the caller belongs to (cross-project access → 403). Global `user.role` still governs
+RBAC *within* each project; a per-project role model is a possible future layer.
+
+**Auth-stack deviation (accepted):** the PRD names *bcrypt + express-session*; the app uses
+**Better Auth** (scrypt hashing, HttpOnly/SameSite=Strict session cookies) per CLAUDE.md. This
+satisfies "passwords hashed, never plaintext" and is tested + security-reviewed. Kept as the
+MVP choice — switching would discard the working, reviewed auth stack.
 
 ## In progress / uncommitted right now
 
-Nothing tracked as in-flight. The remote is the source of truth and everything above is
-committed to it. **Verified green locally on 2026-07-15** (against commit `88c3057`, a
-docs-only child of remote `95920ab`) using a portable Node 24.18.0 + pnpm 9.15.0:
+Nothing tracked as in-flight. Everything above is committed **locally** (branch `main`, ahead
+of remote `95920ab` — not yet pushed, per the current working agreement to commit locally only).
+**Verified green locally on 2026-07-15** with a portable Node + pnpm 9.15.0, and additionally
+**exercised live in a browser** against the running dev server (project switch, sprint dates on
+the header, backlog reorder, structured Planning + Retro rendering):
 
-- `pnpm install --frozen-lockfile` — clean
 - `pnpm --filter backend typecheck` — exit 0, no type errors
-- `pnpm --filter backend test` — **39/39 passing** (`board` 12, `auth` 13, `permissions` 6,
-  `assignees` 8) as of the assignee feature (commit chain `802c427`→`dc33762`→QA)
+- `pnpm --filter backend test` — **63/63 passing** across 8 files: `auth` 13, `board` 12,
+  `permissions` 6, `assignees` 8, `sprint_dates` 4, `reorder` 5, `ceremonies` 7, `projects` 8
 
 (The auth negative-path tests emit expected `Invalid password` / `User not found` warnings
 from Better Auth — those are asserted-for behavior, not failures.)
 
-## Known gaps / next candidates (all core PRD flows are done)
+**Not yet pushed:** the remote still points at `95920ab`; a teammate cloning fresh will not see
+any of the assignee / sprint-date / reorder / structured-ceremony / multi-project work until
+these commits are pushed. CI (`ci.yml`) only runs on push/PR, so it has not run on this work yet
+— the local typecheck + `vitest run` are the stand-in and are green.
 
-- ~~**Story assignees — not wired end to end.**~~ **Done 2026-07-15** — `GET /users`
-  directory + `PATCH /stories/:id/assign` (PO-only), assignee tag + PO picker on cards,
-  security review, and 8 tests. See the "Story assignees" row above.
-- **Backlog reordering.** `priority` exists and `PATCH /stories/:id` accepts it, but there's
-  no drag-free reorder control in `cards.js` (PRD allows dropdown/button reordering).
-- **Structured retro.** Ceremonies store freeform `notes`; the PRD's retro "Went Well /
-  Needs Improvement / Action Items" three-column structure is not modeled separately.
-- **Multiple assignees.** The schema/API model a single `assigneeId`; the PRD phrase
-  "Assignee(s)" hints at multiple. Would need a story⇄user junction table.
+## Known gaps / next candidates
+
+Every PRD feature is now implemented. Remaining items are refinements, not missing flows:
+
+- ~~**Story assignees**~~ **Done 2026-07-15.**
+- ~~**Backlog reordering**~~ **Done 2026-07-15** — `PATCH /stories/:id/reorder` + ▲/▼ controls.
+- ~~**Structured retro / ceremonies**~~ **Done 2026-07-15** — per-type fields, Retro 3-col board.
+- ~~**Multi-project support**~~ **Done 2026-07-15** — projects + membership + scoping.
+- **Push + CI run.** Commits are local only; push to run `ci.yml` on GitHub and confirm green there.
+- **Multiple assignees.** Single `assigneeId` today; "Assignee(s)" hints at multiple (needs a
+  story⇄user junction table).
+- **Per-project roles.** Role is global (`user.role`); a per-project owner/admin role would let
+  projects restrict who can invite. Any member can currently invite.
+- **bcrypt vs Better Auth.** Documented, accepted deviation (see the auth-stack note above).
+- **Legacy `ceremony.notes` column.** Superseded by `details`; left in place (always null) to
+  keep migration 0002 additive. Drop in a later migration if desired.
 
 ## Resolved blockers (kept for history)
 
@@ -90,8 +107,7 @@ from Better Auth — those are asserted-for behavior, not failures.)
 
 ## Next up
 
-Core PRD flows are complete, reviewed, tested, and under CI. The next unit of work is a
-**new** feature rather than finishing a half-done one — the strongest candidate is wiring
-**story assignees** end to end (list-members endpoint + assignee picker on cards + assignee
-tag), following the same five-stage Commit-as-Contract pipeline (frontend → backend →
-security → QA → CI).
+All PRD features are implemented, security-reviewed, and covered by 63 passing tests. The
+immediate next step is operational, not feature work: **push the local commits** so `ci.yml`
+runs on GitHub and the remote reflects reality (it is still at `95920ab`). After that, pick a
+refinement from "Known gaps" (multiple assignees or per-project roles are the strongest).

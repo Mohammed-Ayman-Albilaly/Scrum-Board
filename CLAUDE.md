@@ -90,13 +90,16 @@ scrumboard/
 │   │   │   ├── routes.ts               # POST /auth/signup, /login, /logout
 │   │   │   └── middleware.ts           # Session guard + role checker (used by all routes)
 │   │   ├── features/
-│   │   │   ├── projects/               # Single shared project: schema.ts + seed.ts (ensureDefaultProject)
+│   │   │   ├── projects/               # Multi-project: schema (project + project_member) · logic · routes
+│   │   │   │                           #   (GET/POST /projects, POST /:id/members) · middleware (requireProjectMember) · seed
+│   │   │   ├── users/                  # GET /users — project member directory for the assignee picker (routes only)
 │   │   │   ├── board/                  # GET /board aggregate read (routes.ts · logic.ts)
-│   │   │   ├── stories/                # Product backlog CRUD + PATCH /stories/:id/move (sub-column move, TM/PO)
-│   │   │   ├── sprints/                # Sprint lifecycle (SM only for create/close)
-│   │   │   └── ceremonies/             # Log standup/planning/review/retro (SM only)
+│   │   │   ├── stories/                # Backlog CRUD + /move (TM/PO) + /assign + /reorder + /sprint (PO)
+│   │   │   ├── sprints/                # Sprint lifecycle incl. goal/start/end dates (SM only for create/close)
+│   │   │   └── ceremonies/             # Structured standup/planning/review/retro logs in a `details` JSON col (SM only)
 │   │   │       └── [each feature has: schema.ts · routes.ts · logic.ts · validation.ts]
 │   │   │       # NOTE: no separate columns/ folder — sub-column moves are PATCH /stories/:id/move in stories/.
+│   │   │       # Every board resource router runs requireProjectMember and scopes to ?projectId=.
 │   │   ├── lib/
 │   │   │   ├── types.ts                # Shared TS interfaces — User, Role, Sprint, Story, etc.
 │   │   │   ├── errors.ts               # Custom error classes (AuthError, ValidationError…)
@@ -246,7 +249,16 @@ PORT=3000
 | POST /ceremonies | Scrum Master |
 | PATCH /stories/:id/move (sub-column move) | Team Member, Product Owner |
 | PATCH /stories/:id/assign (set/clear assignee) | Product Owner |
+| PATCH /stories/:id/reorder (backlog priority) | Product Owner |
+| POST /projects (create) | Any authenticated (creator auto-joins) |
+| POST /projects/:id/members (invite) | Any member of that project |
 | GET * (read, incl. GET /users directory) | All authenticated |
+
+**Project scoping (multi-project).** Every board resource (`/board`, `/stories`, `/sprints`,
+`/ceremonies`, `/users`) requires `requireProjectMember`: the caller must be a member of the
+`?projectId=` project (defaults to the shared `DEFAULT_PROJECT_ID`) or the request is `403`.
+Role checks above apply **within** a project; `user.role` is global. New signups auto-enroll in
+the shared project. This supersedes the earlier "single shared project" simplification.
 
 **Never return to client:** password hashes · session IDs in JSON body · API tokens · internal IDs not needed by the UI
 
