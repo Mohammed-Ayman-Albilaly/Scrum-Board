@@ -13,6 +13,7 @@ import { storyRoutes } from "./features/stories/routes.js";
 import { sprintRoutes } from "./features/sprints/routes.js";
 import { ceremonyRoutes } from "./features/ceremonies/routes.js";
 import { userRoutes } from "./features/users/routes.js";
+import { projectRoutes } from "./features/projects/routes.js";
 
 const frontendDir = path.resolve(
   fileURLToPath(new URL("../../frontend/public", import.meta.url)),
@@ -34,6 +35,7 @@ export function createApp(): Express {
     res.json({ ok: true });
   });
   app.use("/auth", authRoutes);
+  app.use("/projects", projectRoutes);
   app.use("/board", boardRoutes);
   app.use("/stories", storyRoutes);
   app.use("/sprints", sprintRoutes);

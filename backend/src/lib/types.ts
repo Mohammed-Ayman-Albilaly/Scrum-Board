@@ -15,6 +15,8 @@ declare global {
   namespace Express {
     interface Request {
       user?: SafeUser;
+      // Set by requireProjectMember once membership is verified.
+      projectId?: string;
     }
   }
 }

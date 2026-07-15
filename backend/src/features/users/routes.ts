@@ -1,17 +1,19 @@
-// GET /users — the team directory that populates the assignee picker. Any
-// authenticated user may read it; only client-safe fields are returned.
+// GET /users?projectId= — the directory of the selected project's members,
+// used by the assignee picker. Membership required; client-safe fields only.
 import { Router } from "express";
 import { requireAuth } from "../../auth/middleware.js";
 import { sendData } from "../../lib/response.js";
-import { listMembers } from "./logic.js";
+import { requireProjectMember } from "../projects/middleware.js";
+import { listProjectMembers } from "../projects/logic.js";
 
 export const userRoutes = Router();
 
 userRoutes.use(requireAuth);
+userRoutes.use(requireProjectMember);
 
-userRoutes.get("/", async (_req, res, next) => {
+userRoutes.get("/", async (req, res, next) => {
   try {
-    sendData(res, 200, { members: await listMembers() });
+    sendData(res, 200, { members: await listProjectMembers(req.projectId!) });
   } catch (err) {
     next(err);
   }

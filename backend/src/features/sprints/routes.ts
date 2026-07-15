@@ -6,18 +6,19 @@ import { mutationLimiter } from "../../middleware/rateLimit.js";
 import { parseBody } from "../../lib/validate.js";
 import { param } from "../../lib/http.js";
 import { sendData } from "../../lib/response.js";
-import { ROLES, DEFAULT_PROJECT_ID } from "../../config/constants.js";
+import { ROLES } from "../../config/constants.js";
+import { requireProjectMember } from "../projects/middleware.js";
 import { CreateSprintSchema } from "./validation.js";
 import { listSprints, createSprint, closeSprint } from "./logic.js";
 
-const PID = DEFAULT_PROJECT_ID;
 export const sprintRoutes = Router();
 
 sprintRoutes.use(requireAuth);
+sprintRoutes.use(requireProjectMember);
 
-sprintRoutes.get("/", async (_req, res, next) => {
+sprintRoutes.get("/", async (req, res, next) => {
   try {
-    sendData(res, 200, { sprints: await listSprints(PID) });
+    sendData(res, 200, { sprints: await listSprints(req.projectId!) });
   } catch (err) {
     next(err);
   }
@@ -28,7 +29,7 @@ const sm = [sameOriginOnly, requireRole(ROLES.SCRUM_MASTER), mutationLimiter];
 sprintRoutes.post("/", ...sm, async (req, res, next) => {
   try {
     const input = parseBody(CreateSprintSchema, req.body);
-    const sprint = await createSprint(input, PID, req.user!.id);
+    const sprint = await createSprint(input, req.projectId!, req.user!.id);
     sendData(res, 201, { sprint });
   } catch (err) {
     next(err);
@@ -37,7 +38,7 @@ sprintRoutes.post("/", ...sm, async (req, res, next) => {
 
 sprintRoutes.patch("/:id/close", ...sm, async (req, res, next) => {
   try {
-    sendData(res, 200, { sprint: await closeSprint(param(req, "id"), PID) });
+    sendData(res, 200, { sprint: await closeSprint(param(req, "id"), req.projectId!) });
   } catch (err) {
     next(err);
   }

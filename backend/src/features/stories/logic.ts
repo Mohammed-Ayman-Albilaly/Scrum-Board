@@ -8,7 +8,7 @@ import { newId } from "../../lib/id.js";
 import { sanitizeText } from "../../lib/sanitize.js";
 import { NotFoundError, ValidationError, ForbiddenError } from "../../lib/errors.js";
 import { SPRINT_COLUMNS, SPRINT_STATUSES } from "../../config/constants.js";
-import { userExists } from "../users/logic.js";
+import { isMember } from "../projects/logic.js";
 import type { CreateStoryInput, UpdateStoryInput } from "./validation.js";
 
 type StoryRow = typeof story.$inferSelect;
@@ -37,10 +37,13 @@ async function findStory(id: string, projectId: string): Promise<StoryRow> {
   return row;
 }
 
-/** Reject an assigneeId that does not belong to a real user (dangling ref). */
-async function assertAssigneeExists(assigneeId: string | null | undefined): Promise<void> {
-  if (assigneeId && !(await userExists(assigneeId))) {
-    throw new NotFoundError("Assignee not found.");
+/** Reject an assignee who is not a member of this project (or does not exist). */
+async function assertAssigneeMember(
+  assigneeId: string | null | undefined,
+  projectId: string,
+): Promise<void> {
+  if (assigneeId && !(await isMember(projectId, assigneeId))) {
+    throw new NotFoundError("Assignee is not a member of this project.");
   }
 }
 
@@ -54,7 +57,7 @@ export async function listBacklog(projectId: string) {
 }
 
 export async function createStory(input: CreateStoryInput, projectId: string) {
-  await assertAssigneeExists(input.assigneeId);
+  await assertAssigneeMember(input.assigneeId, projectId);
   const now = new Date();
   const row = {
     id: newId(),
@@ -76,7 +79,7 @@ export async function createStory(input: CreateStoryInput, projectId: string) {
 
 export async function updateStory(id: string, input: UpdateStoryInput, projectId: string) {
   await findStory(id, projectId);
-  await assertAssigneeExists(input.assigneeId);
+  await assertAssigneeMember(input.assigneeId, projectId);
   const patch: Partial<StoryRow> = { updatedAt: new Date() };
   if (input.title !== undefined) patch.title = input.title.trim();
   if (input.description !== undefined)
@@ -124,7 +127,7 @@ export async function setAssignee(id: string, assigneeId: string | null, project
   const row = await findStory(id, projectId);
   // A closed sprint is read-only, including its stories' assignments.
   if (row.sprintId) await activeSprintOr(row.sprintId, projectId);
-  await assertAssigneeExists(assigneeId);
+  await assertAssigneeMember(assigneeId, projectId);
   await db.update(story).set({ assigneeId, updatedAt: new Date() }).where(eq(story.id, id));
   return serializeStory(await findStory(id, projectId));
 }

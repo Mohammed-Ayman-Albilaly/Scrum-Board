@@ -7,6 +7,8 @@ import { auth } from "./betterAuth.js";
 import { requireAuth } from "./middleware.js";
 import { sameOriginOnly } from "../middleware/csrf.js";
 import { env } from "../config/env.js";
+import { DEFAULT_PROJECT_ID } from "../config/constants.js";
+import { ensureMembership } from "../features/projects/logic.js";
 import { SignupSchema, LoginSchema } from "./validation.js";
 import {
   parseBody,
@@ -42,6 +44,9 @@ authRoutes.post("/signup", sameOriginOnly, authLimiter, async (req, res, next) =
       },
       returnHeaders: true,
     });
+    // Enroll every new user in the shared team project so the default board
+    // works out of the box; they can create or be invited to more.
+    await ensureMembership(DEFAULT_PROJECT_ID, response.user.id);
     forwardCookies(res, headers);
     sendData(res, 201, { user: publicUser(response.user) });
   } catch (err) {

@@ -14,6 +14,7 @@ const TABLES = [
   "account",
   "verification",
   "sprint",
+  "project_member",
   "user",
   "project",
 ] as const;
