@@ -39,13 +39,18 @@ export async function listSprints(projectId: string) {
 
 export async function createSprint(input: CreateSprintInput, projectId: string, userId: string) {
   const now = new Date();
+  const startDate = parseDate(input.startDate, "startDate");
+  const endDate = parseDate(input.endDate, "endDate");
+  if (startDate && endDate && endDate < startDate) {
+    throw new ValidationError("Sprint end date cannot be before its start date.");
+  }
   const row = {
     id: newId(),
     projectId,
     name: input.name.trim(),
     goal: input.goal ? sanitizeText(input.goal) : null,
-    startDate: parseDate(input.startDate, "startDate"),
-    endDate: parseDate(input.endDate, "endDate"),
+    startDate,
+    endDate,
     status: SPRINT_STATUSES.ACTIVE,
     createdBy: userId,
     createdAt: now,
