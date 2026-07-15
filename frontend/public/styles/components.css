@@ -1,0 +1,179 @@
+/* components.css — cards, badges, buttons, forms */
+
+/* ---- Badges ---- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-text-invert);
+  white-space: nowrap;
+}
+
+.badge--unrefined { background: var(--badge-unrefined); }
+.badge--ready { background: var(--badge-ready); }
+.badge--dev { background: var(--badge-dev); }
+.badge--testing { background: var(--badge-testing); }
+.badge--deployed { background: var(--badge-deployed); }
+
+/* ---- Auth card ---- */
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card-lg);
+  padding: 2rem;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+}
+
+.auth-tab {
+  border: none;
+  background: transparent;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.auth-tab:hover {
+  color: var(--color-text);
+}
+
+.auth-tab.is-active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-card);
+}
+
+/* ---- Forms ---- */
+.auth-form {
+  display: none;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.auth-form.is-active {
+  display: flex;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.field input[aria-invalid="true"],
+.field select[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+
+.field__error {
+  font-size: 0.78rem;
+  color: var(--color-error);
+  min-height: 1rem;
+}
+
+.field__error:empty {
+  display: none;
+}
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  color: var(--color-text-invert);
+}
+
+.btn--primary:hover {
+  background: var(--color-secondary);
+}
+
+.btn--block {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---- Form-level note (success / info messages) ---- */
+.form-note {
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  min-height: 1rem;
+}
+
+.form-note:empty {
+  display: none;
+}
+
+.form-note.is-success {
+  color: var(--badge-deployed);
+}
+
+.form-note.is-error {
+  color: var(--color-error);
+}

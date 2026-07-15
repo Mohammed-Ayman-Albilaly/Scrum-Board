@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ScrumBoard — Scrum project management for agile teams</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/components.css" />
+  </head>
+  <body>
+    <div class="landing">
+      <!-- Left: product intro -->
+      <section class="landing__intro" aria-label="Product introduction">
+        <div class="landing__brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span class="brand-name">ScrumBoard</span>
+        </div>
+        <h1 class="landing__headline">Run Scrum correctly, in one place.</h1>
+        <p class="landing__subhead">
+          A shared product backlog, sprint lists with fixed sub-columns, and a
+          global deployed view — with server-enforced roles for every ceremony.
+        </p>
+        <ul class="landing__features">
+          <li>
+            <span class="badge badge--ready">Product Owner</span>
+            Own the backlog: create, groom, and prioritize stories.
+          </li>
+          <li>
+            <span class="badge badge--dev">Scrum Master</span>
+            Manage sprints and log the four Scrum ceremonies.
+          </li>
+          <li>
+            <span class="badge badge--deployed">Team Member</span>
+            Move stories through the sprint workflow.
+          </li>
+        </ul>
+      </section>
+
+      <!-- Right: auth panel -->
+      <section class="landing__auth" aria-label="Authentication">
+        <div class="auth-card">
+          <div
+            class="auth-tabs"
+            role="tablist"
+            aria-label="Choose login or sign up"
+          >
+            <button
+              class="auth-tab is-active"
+              id="tab-login"
+              role="tab"
+              aria-selected="true"
+              aria-controls="panel-login"
+              data-target="login"
+            >
+              Log In
+            </button>
+            <button
+              class="auth-tab"
+              id="tab-signup"
+              role="tab"
+              aria-selected="false"
+              aria-controls="panel-signup"
+              data-target="signup"
+            >
+              Sign Up
+            </button>
+          </div>
+
+          <!-- Login form -->
+          <form
+            class="auth-form is-active"
+            id="panel-login"
+            role="tabpanel"
+            aria-labelledby="tab-login"
+            novalidate
+          >
+            <div class="field">
+              <label for="login-email">Email</label>
+              <input
+                type="email"
+                id="login-email"
+                name="email"
+                autocomplete="email"
+                placeholder="you@team.com"
+                required
+              />
+              <p
+                class="field__error"
+                data-error-for="login-email"
+                aria-live="polite"
+              ></p>
+            </div>
+
+            <div class="field">
+              <label for="login-password">Password</label>
+              <input
+                type="password"
+                id="login-password"
+                name="password"
+                autocomplete="current-password"
+                placeholder="••••••••"
+                required
+              />
+              <p
+                class="field__error"
+                data-error-for="login-password"
+                aria-live="polite"
+              ></p>
+            </div>
+
+            <button type="submit" class="btn btn--primary btn--block">
+              Log In
+            </button>
+            <p class="form-note" data-form-note aria-live="polite"></p>
+          </form>
+
+          <!-- Signup form -->
+          <form
+            class="auth-form"
+            id="panel-signup"
+            role="tabpanel"
+            aria-labelledby="tab-signup"
+            hidden
+            novalidate
+          >
+            <div class="field">
+              <label for="signup-name">Full name</label>
+              <input
+                type="text"
+                id="signup-name"
+                name="name"
+                autocomplete="name"
+                placeholder="Mohammad Albeladi"
+                required
+              />
+              <p
+                class="field__error"
+                data-error-for="signup-name"
+                aria-live="polite"
+              ></p>
+            </div>
+
+            <div class="field">
+              <label for="signup-email">Email</label>
+              <input
+                type="email"
+                id="signup-email"
+                name="email"
+                autocomplete="email"
+                placeholder="you@team.com"
+                required
+              />
+              <p
+                class="field__error"
+                data-error-for="signup-email"
+                aria-live="polite"
+              ></p>
+            </div>
+
+            <div class="field">
+              <label for="signup-password">Password</label>
+              <input
+                type="password"
+                id="signup-password"
+                name="password"
+                autocomplete="new-password"
+                placeholder="At least 8 characters"
+                minlength="8"
+                required
+              />
+              <p
+                class="field__error"
+                data-error-for="signup-password"
+                aria-live="polite"
+              ></p>
+            </div>
+
+            <div class="field">
+              <label for="signup-role">Role</label>
+              <select id="signup-role" name="role" required>
+                <option value="" disabled selected>
+                  Select your Scrum role
+                </option>
+                <option value="PRODUCT_OWNER">Product Owner</option>
+                <option value="SCRUM_MASTER">Scrum Master</option>
+                <option value="TEAM_MEMBER">Team Member</option>
+              </select>
+              <p
+                class="field__error"
+                data-error-for="signup-role"
+                aria-live="polite"
+              ></p>
+            </div>
+
+            <!-- Shown only when role = Team Member -->
+            <div class="field" data-specialization hidden>
+              <label for="signup-specialization">Specialization</label>
+              <select id="signup-specialization" name="specialization">
+                <option value="" disabled selected>
+                  Select your discipline
+                </option>
+                <option value="BACKEND">Backend</option>
+                <option value="FRONTEND">Frontend</option>
+                <option value="UI_UX">UI / UX</option>
+                <option value="QA">QA</option>
+                <option value="DEVOPS">DevOps</option>
+              </select>
+              <p
+                class="field__error"
+                data-error-for="signup-specialization"
+                aria-live="polite"
+              ></p>
+            </div>
+
+            <button type="submit" class="btn btn--primary btn--block">
+              Create Account
+            </button>
+            <p class="form-note" data-form-note aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <script src="scripts/auth.js" defer></script>
+  </body>
+</html>
