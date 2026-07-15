@@ -1,10 +1,12 @@
 // auth.js — landing page login/signup UI behavior.
-// Stage 1: client-side only. Backend wiring (fetch to /auth/*) lands in Stage 2.
+// Posts credentials to the auth API and redirects to the board on success.
 
 "use strict";
 
 const TEAM_MEMBER_ROLE = "TEAM_MEMBER";
 const MIN_PASSWORD_LENGTH = 8;
+const BOARD_URL = "/board.html";
+const ENDPOINTS = { "panel-login": "/auth/login", "panel-signup": "/auth/signup" };
 
 /** Switch the active auth tab and its associated form panel. */
 function activateTab(target) {
@@ -73,7 +75,7 @@ function validateForm(form) {
   return valid;
 }
 
-/** Display a form-level note (placeholder until backend exists). */
+/** Display a form-level note (e.g. a server error message). */
 function showFormNote(form, message, variant) {
   const note = form.querySelector("[data-form-note]");
   if (!note) return;
@@ -82,14 +84,60 @@ function showFormNote(form, message, variant) {
   if (variant) note.classList.add(`is-${variant}`);
 }
 
-/** Handle a form submit: validate, then stub the backend call. */
-function handleSubmit(event) {
+/** Collect non-empty trimmed form values into a request payload. */
+function buildPayload(form) {
+  const payload = {};
+  for (const [key, value] of new FormData(form).entries()) {
+    const trimmed = typeof value === "string" ? value.trim() : value;
+    if (trimmed !== "") payload[key] = trimmed;
+  }
+  return payload;
+}
+
+/** POST JSON to the API with the session cookie; return { status, body }. */
+async function postJson(path, payload) {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify(payload),
+  });
+  let body = null;
+  try {
+    body = await res.json();
+  } catch {
+    /* non-JSON or empty response */
+  }
+  return { status: res.status, body };
+}
+
+/** Toggle the submit button's loading state. */
+function setSubmitting(button, isSubmitting) {
+  if (!button) return;
+  if (button.dataset.label === undefined) button.dataset.label = button.textContent;
+  button.disabled = isSubmitting;
+  button.textContent = isSubmitting ? "Please wait…" : button.dataset.label;
+}
+
+/** Handle a form submit: validate, POST to the API, redirect or show error. */
+async function handleSubmit(event) {
   event.preventDefault();
   const form = event.currentTarget;
   if (!validateForm(form)) return;
-  // Stage 2 will POST these credentials to the auth API.
-  const action = form.id === "panel-signup" ? "Account creation" : "Login";
-  showFormNote(form, `${action} will be enabled once the backend is connected.`, "success");
+  const button = form.querySelector('button[type="submit"]');
+  setSubmitting(button, true);
+  try {
+    const { status, body } = await postJson(ENDPOINTS[form.id], buildPayload(form));
+    if (status >= 200 && status < 300) {
+      window.location.href = BOARD_URL;
+      return;
+    }
+    showFormNote(form, body?.error?.message ?? "Something went wrong. Please try again.", "error");
+  } catch {
+    showFormNote(form, "Network error — check your connection and try again.", "error");
+  } finally {
+    setSubmitting(button, false);
+  }
 }
 
 /** Wire up tab clicks, role changes, and form submissions. */
