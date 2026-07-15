@@ -53,10 +53,15 @@ column is the natural future extension.
 ## In progress / uncommitted right now
 
 Nothing tracked as in-flight. The remote is the source of truth and everything above is
-committed to it. Note: this file is being maintained from a fresh clone with **no Node
-toolchain installed locally**, so `pnpm typecheck` / `pnpm test` have not been re-run on
-this machine — the ✅ CI column reflects that the workflow exists and the suite is designed
-to run green, and should be confirmed against the latest CI run on GitHub.
+committed to it. **Verified green locally on 2026-07-15** (against commit `88c3057`, a
+docs-only child of remote `95920ab`) using a portable Node 24.18.0 + pnpm 9.15.0:
+
+- `pnpm install --frozen-lockfile` — clean
+- `pnpm --filter backend typecheck` — exit 0, no type errors
+- `pnpm --filter backend test` — **31/31 passing** (`board` 12, `auth` 13, `permissions` 6)
+
+(The auth negative-path tests emit expected `Invalid password` / `User not found` warnings
+from Better Auth — those are asserted-for behavior, not failures.)
 
 ## Known gaps / next candidates (all core PRD flows are done)
 
