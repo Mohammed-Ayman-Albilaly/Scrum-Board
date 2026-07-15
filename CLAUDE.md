@@ -245,7 +245,8 @@ PORT=3000
 | PATCH /sprints/:id/close | Scrum Master |
 | POST /ceremonies | Scrum Master |
 | PATCH /stories/:id/move (sub-column move) | Team Member, Product Owner |
-| GET * (read) | All authenticated |
+| PATCH /stories/:id/assign (set/clear assignee) | Product Owner |
+| GET * (read, incl. GET /users directory) | All authenticated |
 
 **Never return to client:** password hashes · session IDs in JSON body · API tokens · internal IDs not needed by the UI
 
