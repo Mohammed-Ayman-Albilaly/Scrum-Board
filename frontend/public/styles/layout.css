@@ -152,6 +152,20 @@
   margin-top: 0.35rem;
 }
 
+.card__assignee {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.card__assignee-name {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
 .card__controls {
   display: flex;
   flex-wrap: wrap;

@@ -10,9 +10,18 @@ export const ROLES = {
 export const can = {
   editBacklog: (role) => role === ROLES.PRODUCT_OWNER,
   assignSprint: (role) => role === ROLES.PRODUCT_OWNER,
+  assignStory: (role) => role === ROLES.PRODUCT_OWNER,
   manageSprints: (role) => role === ROLES.SCRUM_MASTER,
   logCeremonies: (role) => role === ROLES.SCRUM_MASTER,
   moveStory: (role) => role === ROLES.PRODUCT_OWNER || role === ROLES.TEAM_MEMBER,
+};
+
+export const SPECIALIZATION_LABELS = {
+  BACKEND: "Backend",
+  FRONTEND: "Frontend",
+  UI_UX: "UI/UX",
+  QA: "QA",
+  DEVOPS: "DevOps",
 };
 
 export const ROLE_LABELS = {

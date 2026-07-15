@@ -23,12 +23,18 @@ async function load() {
     window.location.href = "/";
     return;
   }
-  const [board, ceremonies] = await Promise.all([api("/board"), api("/ceremonies")]);
+  const [board, ceremonies, members] = await Promise.all([
+    api("/board"),
+    api("/ceremonies"),
+    api("/users"),
+  ]);
   const ctx = {
     role: me.role,
     sprints: board.sprints,
     activeSprints: board.sprints.filter((s) => s.status === "ACTIVE"),
     sprintsById: new Map(board.sprints.map((s) => [s.id, s])),
+    members: members.members,
+    membersById: new Map(members.members.map((m) => [m.id, m])),
     ceremonies: ceremonies.ceremonies,
     reload: load,
   };
