@@ -59,11 +59,10 @@ MVP choice — switching would discard the working, reviewed auth stack.
 
 ## In progress / uncommitted right now
 
-Nothing tracked as in-flight. Everything above is committed **locally** (branch `main`, ahead
-of remote `95920ab` — not yet pushed, per the current working agreement to commit locally only).
-**Verified green locally on 2026-07-15** with a portable Node + pnpm 9.15.0, and additionally
-**exercised live in a browser** against the running dev server (project switch, sprint dates on
-the header, backlog reorder, structured Planning + Retro rendering):
+Nothing tracked as in-flight. Everything above is committed **and pushed to `origin/main`**
+on 2026-07-16. **Verified green locally on 2026-07-15** with a portable Node + pnpm 9.15.0,
+and additionally **exercised live in a browser** against the running dev server (project switch,
+sprint dates on the header, backlog reorder, structured Planning + Retro rendering):
 
 - `pnpm --filter backend typecheck` — exit 0, no type errors
 - `pnpm --filter backend test` — **63/63 passing** across 8 files: `auth` 13, `board` 12,
@@ -72,10 +71,9 @@ the header, backlog reorder, structured Planning + Retro rendering):
 (The auth negative-path tests emit expected `Invalid password` / `User not found` warnings
 from Better Auth — those are asserted-for behavior, not failures.)
 
-**Not yet pushed:** the remote still points at `95920ab`; a teammate cloning fresh will not see
-any of the assignee / sprint-date / reorder / structured-ceremony / multi-project work until
-these commits are pushed. CI (`ci.yml`) only runs on push/PR, so it has not run on this work yet
-— the local typecheck + `vitest run` are the stand-in and are green.
+**Pushed:** all assignee / sprint-date / reorder / structured-ceremony / multi-project work is
+on `origin/main`. Pushing to `main` triggers `.github/workflows/ci.yml` (install → typecheck →
+`vitest run`); confirm that run is green on GitHub Actions.
 
 ## Known gaps / next candidates
 
@@ -85,7 +83,7 @@ Every PRD feature is now implemented. Remaining items are refinements, not missi
 - ~~**Backlog reordering**~~ **Done 2026-07-15** — `PATCH /stories/:id/reorder` + ▲/▼ controls.
 - ~~**Structured retro / ceremonies**~~ **Done 2026-07-15** — per-type fields, Retro 3-col board.
 - ~~**Multi-project support**~~ **Done 2026-07-15** — projects + membership + scoping.
-- **Push + CI run.** Commits are local only; push to run `ci.yml` on GitHub and confirm green there.
+- **Confirm CI green on GitHub.** Pushed 2026-07-16; verify the Actions run for `ci.yml` passed.
 - **Multiple assignees.** Single `assigneeId` today; "Assignee(s)" hints at multiple (needs a
   story⇄user junction table).
 - **Per-project roles.** Role is global (`user.role`); a per-project owner/admin role would let
@@ -107,7 +105,6 @@ Every PRD feature is now implemented. Remaining items are refinements, not missi
 
 ## Next up
 
-All PRD features are implemented, security-reviewed, and covered by 63 passing tests. The
-immediate next step is operational, not feature work: **push the local commits** so `ci.yml`
-runs on GitHub and the remote reflects reality (it is still at `95920ab`). After that, pick a
-refinement from "Known gaps" (multiple assignees or per-project roles are the strongest).
+All PRD features are implemented, security-reviewed, covered by 63 passing tests, and pushed to
+`origin/main`. Next step: confirm the GitHub Actions run for the pushed commits is green, then
+pick a refinement from "Known gaps" (multiple assignees or per-project roles are the strongest).
