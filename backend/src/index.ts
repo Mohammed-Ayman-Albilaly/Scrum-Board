@@ -2,7 +2,7 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { env } from "./config/env.js";
+import { env, isProd } from "./config/env.js";
 import { securityHeaders } from "./middleware/securityHeaders.js";
 import { requestLogger } from "./middleware/requestLogger.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -14,6 +14,9 @@ const frontendDir = path.resolve(
 );
 
 app.disable("x-powered-by");
+// Behind a PaaS TLS proxy, trust the first hop so req.ip (rate-limit key) and
+// req.secure reflect the real client instead of the proxy.
+if (isProd) app.set("trust proxy", 1);
 app.use(securityHeaders);
 app.use(requestLogger);
 app.use(express.json({ limit: "16kb" }));

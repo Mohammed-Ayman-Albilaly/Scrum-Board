@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "./betterAuth.js";
 import { requireAuth } from "./middleware.js";
+import { sameOriginOnly } from "../middleware/csrf.js";
 import { SignupSchema, LoginSchema } from "./validation.js";
 import {
   parseBody,
@@ -25,7 +26,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-authRoutes.post("/signup", authLimiter, async (req, res, next) => {
+authRoutes.post("/signup", sameOriginOnly, authLimiter, async (req, res, next) => {
   try {
     const body = parseBody(SignupSchema, req.body);
     assertSpecializationRule(body.role, body.specialization);
@@ -46,7 +47,7 @@ authRoutes.post("/signup", authLimiter, async (req, res, next) => {
   }
 });
 
-authRoutes.post("/login", authLimiter, async (req, res, next) => {
+authRoutes.post("/login", sameOriginOnly, authLimiter, async (req, res, next) => {
   try {
     const body = parseBody(LoginSchema, req.body);
     const { headers, response } = await auth.api.signInEmail({
@@ -60,7 +61,7 @@ authRoutes.post("/login", authLimiter, async (req, res, next) => {
   }
 });
 
-authRoutes.post("/logout", requireAuth, async (req, res, next) => {
+authRoutes.post("/logout", sameOriginOnly, requireAuth, async (req, res, next) => {
   try {
     const { headers } = await auth.api.signOut({
       headers: fromNodeHeaders(req.headers),
