@@ -1,25 +1,11 @@
-// Pure helpers for the auth routes: validation, field rules, and response shaping.
+// Pure helpers for the auth routes: field rules, error mapping, response shaping.
 import type { Response } from "express";
-import type { Static, TSchema } from "@sinclair/typebox";
-import { Value } from "@sinclair/typebox/value";
 import { APIError } from "better-auth/api";
 import { ROLES, type Role, type Specialization } from "../config/constants.js";
 import { ValidationError, ConflictError, AuthError } from "../lib/errors.js";
 import type { SafeUser } from "../lib/types.js";
 
-/** Strip unknown keys, then validate against the schema. Throws ValidationError. */
-export function parseBody<T extends TSchema>(schema: T, body: unknown): Static<T> {
-  if (typeof body !== "object" || body === null) {
-    throw new ValidationError("Request body must be a JSON object.");
-  }
-  const cleaned = Value.Clean(schema, { ...(body as Record<string, unknown>) });
-  if (!Value.Check(schema, cleaned)) {
-    const first = [...Value.Errors(schema, cleaned)][0];
-    const where = first?.path ? first.path.replace(/^\//, "") : "body";
-    throw new ValidationError(`${where}: ${first?.message ?? "is invalid"}.`);
-  }
-  return cleaned as Static<T>;
-}
+export { parseBody } from "../lib/validate.js";
 
 /** Specialization is required for Team Members and forbidden for other roles. */
 export function assertSpecializationRule(

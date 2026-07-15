@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit -m ' *)",
+      "Bash(curl -s -o /dev/null -w 'Origin evil.example -> HTTP %{http_code} \\(vuln if 2xx\\)\\\\n' -X POST http://localhost:3000/auth/login -H 'Content-Type: application/json' -H 'Origin: http://evil.example' -d '{\"email\":\"po@team.com\",\"password\":\"password123\"}')",
+      "Bash(curl -s -D - -o /dev/null -X POST http://localhost:3000/auth/login -H 'Content-Type: application/json' -H 'Origin: http://evil.example' -d '{}')",
+      "Bash(curl -s -o /dev/null -w 'Origin evil.example -> HTTP %{http_code}\\\\n' -X POST http://localhost:3000/auth/login -H 'Content-Type: application/json' -H 'Origin: http://evil.example' -d '{\"email\":\"po@team.com\",\"password\":\"password123\"}')",
+      "Bash(curl -s -o /dev/null -w 'Origin localhost:3000 -> HTTP %{http_code}\\\\n' -X POST http://localhost:3000/auth/login -H 'Content-Type: application/json' -H 'Origin: http://localhost:3000' -d '{\"email\":\"po@team.com\",\"password\":\"password123\"}')",
+      "Bash(curl -s -o /dev/null -w 'no Origin -> HTTP %{http_code}\\\\n' -X POST http://localhost:3000/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"po@team.com\",\"password\":\"password123\"}')",
+      "Bash(curl -s -o /dev/null -w 'signup xorigin -> HTTP %{http_code}\\\\n' -X POST http://localhost:3000/auth/signup -H 'Content-Type: application/json' -H 'Origin: http://evil.example' -d '{\"name\":\"x\",\"email\":\"z@z.com\",\"password\":\"password123\",\"role\":\"SCRUM_MASTER\"}')",
+      "Bash(curl -s -o /dev/null -w 'logout xorigin -> HTTP %{http_code}\\\\n' -X POST http://localhost:3000/auth/logout -H 'Origin: http://evil.example')",
+      "Bash(\"C:/Users/Hmood/pnpm-home/pnpm.exe\" dev *)",
+      "Bash(curl -s -o /dev/null -w \"GET /            -> HTTP %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"GET /health      -> HTTP %{http_code}\\\\n\" http://localhost:3000/health)",
+      "Bash(\"C:/Users/Hmood/pnpm-home/pnpm.exe\" --filter backend dev)",
+      "Bash(curl -s -o /dev/null -w \"GET /       -> HTTP %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"GET /health -> HTTP %{http_code}\\\\n\" http://localhost:3000/health)",
+      "Bash(curl -s -X POST http://localhost:3000/auth/signup -H 'Content-Type: application/json' -H 'Origin: http://localhost:3000' -d '{\"name\":\"Test User\",\"email\":\"test.user@team.com\",\"password\":\"password123\",\"role\":\"SCRUM_MASTER\"}' -w '\\\\n[HTTP %{http_code}]\\\\n')",
+      "Bash(ps -W)",
+      "Bash(\"C:/Users/Hmood/pnpm-home/pnpm.exe\" test *)"
+    ]
+  }
+}

@@ -6,6 +6,7 @@ import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "./betterAuth.js";
 import { requireAuth } from "./middleware.js";
 import { sameOriginOnly } from "../middleware/csrf.js";
+import { env } from "../config/env.js";
 import { SignupSchema, LoginSchema } from "./validation.js";
 import {
   parseBody,
@@ -24,6 +25,7 @@ const authLimiter = rateLimit({
   limit: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => env.NODE_ENV === "test", // don't throttle the test suite
 });
 
 authRoutes.post("/signup", sameOriginOnly, authLimiter, async (req, res, next) => {

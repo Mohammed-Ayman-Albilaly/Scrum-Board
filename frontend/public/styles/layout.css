@@ -1,0 +1,270 @@
+/* layout.css — board page: header, region grid, sprint sub-columns, cards. */
+
+.board-page {
+  background: var(--color-bg);
+}
+
+.board-loading {
+  padding: 3rem;
+  color: var(--color-text-muted);
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.5rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-header .brand-name {
+  color: var(--color-primary);
+}
+
+.app-header__user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Region grid: backlog | sprints | deployed | ceremonies */
+.board {
+  display: grid;
+  grid-template-columns: 300px 1fr 300px;
+  grid-template-areas:
+    "backlog sprints deployed"
+    "ceremonies ceremonies ceremonies";
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  align-items: start;
+}
+
+.panel--backlog { grid-area: backlog; }
+.panel--sprints { grid-area: sprints; }
+.panel--deployed { grid-area: deployed; }
+.panel--ceremonies { grid-area: ceremonies; }
+
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.panel__title {
+  font-size: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.muted {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+/* Sprint block */
+.sprint {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background: var(--color-bg);
+}
+
+.sprint__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.sprint__name {
+  font-weight: 600;
+}
+
+.sprint__cols {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap: 0.6rem;
+}
+
+.sprint-col {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem;
+}
+
+.sprint-col__title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+/* Story card */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem;
+  box-shadow: var(--shadow-card);
+}
+
+.card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.card__title {
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.card__points {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.card__desc {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: 0.35rem;
+}
+
+.card__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+}
+
+.card__control {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.3rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+/* Inline forms (add story / sprint / ceremony) */
+.inline-form,
+.ceremony-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.field-input {
+  flex: 1 1 auto;
+  min-width: 120px;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+/* Ceremonies */
+.ceremony-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ceremony-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem;
+  background: var(--color-bg);
+}
+
+.ceremony-item__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Buttons: small + ghost variants (base .btn lives in components.css) */
+.btn--sm {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.btn--ghost {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.btn--ghost:hover {
+  background: var(--color-bg);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Toasts */
+.toasts {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 50;
+}
+
+.toast {
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-invert);
+  box-shadow: var(--shadow-card-lg);
+  font-size: 0.85rem;
+}
+
+.toast--info { background: var(--color-primary); }
+.toast--success { background: var(--badge-deployed); }
+.toast--error { background: var(--color-error); }
+
+@media (max-width: 1000px) {
+  .board {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "backlog"
+      "sprints"
+      "deployed"
+      "ceremonies";
+  }
+  .sprint__cols {
+    grid-template-columns: 1fr 1fr;
+  }
+}
