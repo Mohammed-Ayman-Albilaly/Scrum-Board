@@ -90,13 +90,13 @@ scrumboard/
 │   │   │   ├── routes.ts               # POST /auth/signup, /login, /logout
 │   │   │   └── middleware.ts           # Session guard + role checker (used by all routes)
 │   │   ├── features/
-│   │   │   ├── users/                  # Profile, specialization
-│   │   │   ├── projects/               # Create project, invite members
-│   │   │   ├── stories/                # Product backlog CRUD (PO only for mutations)
+│   │   │   ├── projects/               # Single shared project: schema.ts + seed.ts (ensureDefaultProject)
+│   │   │   ├── board/                  # GET /board aggregate read (routes.ts · logic.ts)
+│   │   │   ├── stories/                # Product backlog CRUD + PATCH /stories/:id/move (sub-column move, TM/PO)
 │   │   │   ├── sprints/                # Sprint lifecycle (SM only for create/close)
-│   │   │   ├── columns/                # Move story between sub-columns (TM only)
 │   │   │   └── ceremonies/             # Log standup/planning/review/retro (SM only)
-│   │   │       └── [each feature has: schema.ts · routes.ts · logic.ts]
+│   │   │       └── [each feature has: schema.ts · routes.ts · logic.ts · validation.ts]
+│   │   │       # NOTE: no separate columns/ folder — sub-column moves are PATCH /stories/:id/move in stories/.
 │   │   ├── lib/
 │   │   │   ├── types.ts                # Shared TS interfaces — User, Role, Sprint, Story, etc.
 │   │   │   ├── errors.ts               # Custom error classes (AuthError, ValidationError…)
@@ -244,7 +244,7 @@ PORT=3000
 | POST /sprints | Scrum Master |
 | PATCH /sprints/:id/close | Scrum Master |
 | POST /ceremonies | Scrum Master |
-| PATCH /columns/:id/stories/:id (move) | Team Member, Product Owner |
+| PATCH /stories/:id/move (sub-column move) | Team Member, Product Owner |
 | GET * (read) | All authenticated |
 
 **Never return to client:** password hashes · session IDs in JSON body · API tokens · internal IDs not needed by the UI

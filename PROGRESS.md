@@ -28,57 +28,63 @@
 
 ## Feature status
 
+Reconciled 2026-07-15 against the actual remote (`HEAD` = `95920ab`), which committed and
+pushed all the WIP a previous entry of this file had described as "uncommitted." The
+earlier entry predated that commit; the table below reflects what is genuinely on GitHub.
+
 | Feature | Frontend UI | Backend API | Security review | Tests (QA) | CI |
 |---|---|---|---|---|---|
-| Landing page | ✅ | — | ✅ | ⬜ | ⬜ |
-| Auth (signup/login/logout/session) | ✅ | ✅ | ✅ | 🟡 written, not yet run/confirmed green | ⬜ |
-| Board page shell (`GET /board` aggregate read) | 🟡 | 🟡 | ⬜ | ⬜ | ⬜ |
-| Stories / product backlog (CRUD + move) | 🟡 (`cards.js`) | 🟡 (CRUD + `PATCH /stories/:id/move`, `/sprint`) | ⬜ | ⬜ | ⬜ |
-| Sprints (create / close) | ⬜ no dedicated UI yet | 🟡 | ⬜ | ⬜ | ⬜ |
-| Ceremonies (log standup/planning/review/retro) | 🟡 (`ceremonies.js`) | 🟡 | ⬜ | ⬜ | ⬜ |
-| Projects (create / invite members) | ⬜ | 🟡 schema + seed only — **no routes.ts/logic.ts, no API yet** | ⬜ | ⬜ | ⬜ |
-| Global Deployed list | ⬜ | ⬜ not started as its own endpoint | ⬜ | ⬜ | ⬜ |
-| CI pipeline | — | — | — | — | ⬜ no `.github/workflows` in repo at all |
+| Landing page | ✅ | — | ✅ | — static page, no tests | ✅ |
+| Auth (signup/login/logout/session) | ✅ | ✅ | ✅ | ✅ `auth.test.ts` | ✅ |
+| Board page shell (`GET /board` aggregate read) | ✅ | ✅ | ✅ | ✅ `board.test.ts` | ✅ |
+| Stories / product backlog (CRUD + move) | ✅ (`cards.js`) | ✅ (CRUD + `PATCH /stories/:id/move`, `/sprint`) | ✅ | ✅ `board.test.ts` | ✅ |
+| Sprints (create / close) | ✅ (`newSprintForm` in `board.js`) | ✅ | ✅ | ✅ `board.test.ts` (create/close + closed-sprint lock) | ✅ |
+| Ceremonies (log standup/planning/review/retro) | ✅ (`ceremonies.js`) | ✅ | ✅ | ✅ `board.test.ts` (RBAC + validation) | ✅ |
+| Projects (single shared project) | — by design | ✅ schema + `ensureDefaultProject()` seed | ✅ | ✅ via seed in `setup.ts` | ✅ |
+| Global Deployed list | ✅ (`deployedPanel`) | ✅ (part of `GET /board`) | ✅ | ✅ `board.test.ts` (backlog→deployed flow) | ✅ |
+| CI pipeline | — | — | — | — | ✅ `.github/workflows/ci.yml` (typecheck + test) |
+
+**Multi-project note:** the PRD lists multi-project support as a constraint, but the current
+design deliberately scopes everything to one shared project (`DEFAULT_PROJECT_ID`). There is
+no create-project / invite-members API or UI. This is a known, intentional simplification —
+not a half-finished feature. Layering multiple projects on top of the existing `projectId`
+column is the natural future extension.
 
 ## In progress / uncommitted right now
 
-As of 2026-07-15, `git status` shows a large amount of uncommitted work on this machine
-that does **not exist on GitHub yet**:
+Nothing tracked as in-flight. The remote is the source of truth and everything above is
+committed to it. Note: this file is being maintained from a fresh clone with **no Node
+toolchain installed locally**, so `pnpm typecheck` / `pnpm test` have not been re-run on
+this machine — the ✅ CI column reflects that the workflow exists and the suite is designed
+to run green, and should be confirmed against the latest CI run on GitHub.
 
-- All of `backend/src/features/` (board, stories, sprints, ceremonies, projects) —
-  routes/logic/schema/validation files, uncommitted.
-- `backend/tests/` (auth.test.ts, permissions.test.ts, helpers.ts, setup.ts) and
-  `backend/vitest.config.ts` — uncommitted, not yet run.
-- `frontend/public/board.html` and `scripts/{board,cards,ceremonies,permissions,utils}.js`,
-  `styles/layout.css` — uncommitted.
-- Modifications to already-committed files: `backend/src/auth/{logic,routes}.ts`,
-  `backend/src/config/{constants,db}.ts`, `backend/src/index.ts`, `backend/src/lib/errors.ts`,
-  `backend/package.json`, `pnpm-lock.yaml`, `backend/drizzle/meta/_journal.json`.
-- New untracked lib/middleware files: `backend/src/app.ts`, `backend/src/lib/{http,id,sanitize,validate}.ts`,
-  `backend/src/middleware/rateLimit.ts`, `backend/drizzle/0001_nosy_stardust.sql` +
-  `meta/0001_snapshot.json`.
+## Known gaps / next candidates (all core PRD flows are done)
 
-**Before handing off to another machine, this all needs to be committed (through the
-proper stage-tagged commits where possible) and pushed — otherwise a teammate's agent
-starts from the last pushed commit (`2a2ecf9 security: patch landing page auth`), not
-from this state.**
+- **Story assignees — not wired end to end.** Backend fully supports it (`assigneeId` in
+  `story` schema, `CreateStorySchema`/`UpdateStorySchema`, and `createStory`/`updateStory`
+  logic), but there is **no UI to pick an assignee** and **no endpoint to list team members**
+  to choose from. Cards never show an assignee/specialization tag despite the PRD calling
+  for it. This is the clearest remaining end-to-end gap.
+- **Backlog reordering.** `priority` exists and `PATCH /stories/:id` accepts it, but there's
+  no drag-free reorder control in `cards.js` (PRD allows dropdown/button reordering).
+- **Structured retro.** Ceremonies store freeform `notes`; the PRD's retro "Went Well /
+  Needs Improvement / Action Items" three-column structure is not modeled separately.
 
-## Blockers / open questions
+## Resolved blockers (kept for history)
 
-- **Architecture drift:** CLAUDE.md's file tree documents a separate `features/columns/`
-  folder for "move story between sub-columns." The actual implementation puts that
-  mutation at `PATCH /stories/:id/move` inside `features/stories/`. Decide whether to
-  update CLAUDE.md's diagram to match reality, or refactor into a `columns/` folder —
-  don't let the two silently diverge further.
-- `backend/package.json` has no `"test"` script yet even though vitest + supertest +
-  `tests/` exist. Add one (e.g. `"test": "vitest run"`) so `pnpm test` works and CI can
-  call it later.
-- No CI pipeline exists yet (stage 5 of the Commit-as-Contract Workflow). Until one is
-  set up, treat `pnpm typecheck` + `pnpm test` run locally as the manual stand-in — don't
-  mark the CI column ✅ for anything until real CI exists and is green.
+- ~~Architecture drift: CLAUDE.md documented a `features/columns/` folder.~~ **Resolved
+  2026-07-15** by updating CLAUDE.md's file tree to match reality — the "move story between
+  sub-columns" mutation lives at `PATCH /stories/:id/move` inside `features/stories/`; there
+  is no `columns/` folder.
+- ~~`backend/package.json` had no `"test"` script.~~ **Resolved** — `"test": "vitest run"`
+  is present; `pnpm --filter backend test` works.
+- ~~No CI pipeline.~~ **Resolved** — `.github/workflows/ci.yml` runs `pnpm install
+  --frozen-lockfile`, typecheck, then the test suite on every push to `main` and every PR.
 
 ## Next up
 
-Whoever resumes: pick the next ⬜/🟡 cell in the table, top to bottom, left to right —
-but first commit and push the uncommitted WIP listed above so it isn't lost or
-duplicated by two people working from different starting points.
+Core PRD flows are complete, reviewed, tested, and under CI. The next unit of work is a
+**new** feature rather than finishing a half-done one — the strongest candidate is wiring
+**story assignees** end to end (list-members endpoint + assignee picker on cards + assignee
+tag), following the same five-stage Commit-as-Contract pipeline (frontend → backend →
+security → QA → CI).
