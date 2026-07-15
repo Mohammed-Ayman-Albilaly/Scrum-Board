@@ -42,6 +42,7 @@ earlier entry predated that commit; the table below reflects what is genuinely o
 | Ceremonies (log standup/planning/review/retro) | ✅ (`ceremonies.js`) | ✅ | ✅ | ✅ `board.test.ts` (RBAC + validation) | ✅ |
 | Projects (single shared project) | — by design | ✅ schema + `ensureDefaultProject()` seed | ✅ | ✅ via seed in `setup.ts` | ✅ |
 | Global Deployed list | ✅ (`deployedPanel`) | ✅ (part of `GET /board`) | ✅ | ✅ `board.test.ts` (backlog→deployed flow) | ✅ |
+| Story assignees (`GET /users` + `PATCH /stories/:id/assign`) | ✅ (tag + PO picker) | ✅ | ✅ `docs/security-review-assignees.md` | ✅ `assignees.test.ts` (8) | ✅ |
 | CI pipeline | — | — | — | — | ✅ `.github/workflows/ci.yml` (typecheck + test) |
 
 **Multi-project note:** the PRD lists multi-project support as a constraint, but the current
@@ -58,22 +59,23 @@ docs-only child of remote `95920ab`) using a portable Node 24.18.0 + pnpm 9.15.0
 
 - `pnpm install --frozen-lockfile` — clean
 - `pnpm --filter backend typecheck` — exit 0, no type errors
-- `pnpm --filter backend test` — **31/31 passing** (`board` 12, `auth` 13, `permissions` 6)
+- `pnpm --filter backend test` — **39/39 passing** (`board` 12, `auth` 13, `permissions` 6,
+  `assignees` 8) as of the assignee feature (commit chain `802c427`→`dc33762`→QA)
 
 (The auth negative-path tests emit expected `Invalid password` / `User not found` warnings
 from Better Auth — those are asserted-for behavior, not failures.)
 
 ## Known gaps / next candidates (all core PRD flows are done)
 
-- **Story assignees — not wired end to end.** Backend fully supports it (`assigneeId` in
-  `story` schema, `CreateStorySchema`/`UpdateStorySchema`, and `createStory`/`updateStory`
-  logic), but there is **no UI to pick an assignee** and **no endpoint to list team members**
-  to choose from. Cards never show an assignee/specialization tag despite the PRD calling
-  for it. This is the clearest remaining end-to-end gap.
+- ~~**Story assignees — not wired end to end.**~~ **Done 2026-07-15** — `GET /users`
+  directory + `PATCH /stories/:id/assign` (PO-only), assignee tag + PO picker on cards,
+  security review, and 8 tests. See the "Story assignees" row above.
 - **Backlog reordering.** `priority` exists and `PATCH /stories/:id` accepts it, but there's
   no drag-free reorder control in `cards.js` (PRD allows dropdown/button reordering).
 - **Structured retro.** Ceremonies store freeform `notes`; the PRD's retro "Went Well /
   Needs Improvement / Action Items" three-column structure is not modeled separately.
+- **Multiple assignees.** The schema/API model a single `assigneeId`; the PRD phrase
+  "Assignee(s)" hints at multiple. Would need a story⇄user junction table.
 
 ## Resolved blockers (kept for history)
 
