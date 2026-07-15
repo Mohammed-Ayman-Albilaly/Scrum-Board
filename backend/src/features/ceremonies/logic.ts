@@ -6,7 +6,7 @@ import { sprint } from "../sprints/schema.js";
 import { newId } from "../../lib/id.js";
 import { sanitizeText } from "../../lib/sanitize.js";
 import { NotFoundError } from "../../lib/errors.js";
-import type { CreateCeremonyInput } from "./validation.js";
+import { CEREMONY_TEXT_FIELDS, type CreateCeremonyInput } from "./validation.js";
 
 type CeremonyRow = typeof ceremony.$inferSelect;
 
@@ -17,11 +17,23 @@ export function serializeCeremony(row: CeremonyRow) {
   return {
     id: row.id,
     type: row.type,
-    notes: row.notes,
     sprintId: row.sprintId,
-    createdBy: row.createdBy,
+    details: (row.details ? JSON.parse(row.details) : {}) as Record<string, string | number>,
     createdAt: row.createdAt.toISOString(),
   };
+}
+
+/** Keep only the fields valid for this ceremony type; sanitize all text. */
+function buildDetails(input: CreateCeremonyInput): Record<string, string | number> {
+  const details: Record<string, string | number> = {};
+  for (const field of CEREMONY_TEXT_FIELDS[input.type]) {
+    const value = input[field];
+    if (typeof value === "string" && value.trim()) details[field] = sanitizeText(value);
+  }
+  if (input.type === "PLANNING" && input.committedPoints !== undefined) {
+    details.committedPoints = input.committedPoints;
+  }
+  return details;
 }
 
 /** Clamp pagination params to safe bounds (offset-based, per CLAUDE.md). */
@@ -49,7 +61,8 @@ export async function createCeremony(input: CreateCeremonyInput, projectId: stri
     projectId,
     sprintId: input.sprintId ?? null,
     type: input.type,
-    notes: input.notes ? sanitizeText(input.notes) : null,
+    notes: null,
+    details: JSON.stringify(buildDetails(input)),
     createdBy: userId,
     createdAt: new Date(),
   };

@@ -1,0 +1,1 @@
+ALTER TABLE `ceremony` ADD `details` text;

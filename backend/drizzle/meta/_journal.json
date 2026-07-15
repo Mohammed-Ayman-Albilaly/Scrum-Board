@@ -15,6 +15,13 @@
       "when": 1784126467216,
       "tag": "0001_nosy_stardust",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784139506456,
+      "tag": "0002_nifty_dormammu",
+      "breakpoints": true
     }
   ]
 }

@@ -14,7 +14,9 @@ export const ceremony = sqliteTable(
       .references(() => project.id, { onDelete: "cascade" }),
     sprintId: text("sprint_id").references(() => sprint.id, { onDelete: "cascade" }),
     type: text("type").notNull(),
-    notes: text("notes"),
+    notes: text("notes"), // legacy freeform note; superseded by structured `details`
+    // Per-type structured fields as a JSON string (validated per type on write).
+    details: text("details"),
     createdBy: text("created_by")
       .notNull()
       .references(() => user.id),
