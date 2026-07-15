@@ -26,3 +26,9 @@ export const AssignSprintSchema = Type.Object({
   sprintId: Type.Union([Type.String({ minLength: 1, maxLength: 64 }), Type.Null()]),
 });
 export type AssignSprintInput = Static<typeof AssignSprintSchema>;
+
+// PO assigning a story to a team member (assigneeId) or clearing it (null).
+export const AssignAssigneeSchema = Type.Object({
+  assigneeId: Type.Union([Type.String({ minLength: 1, maxLength: 64 }), Type.Null()]),
+});
+export type AssignAssigneeInput = Static<typeof AssignAssigneeSchema>;

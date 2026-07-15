@@ -12,6 +12,7 @@ import { boardRoutes } from "./features/board/routes.js";
 import { storyRoutes } from "./features/stories/routes.js";
 import { sprintRoutes } from "./features/sprints/routes.js";
 import { ceremonyRoutes } from "./features/ceremonies/routes.js";
+import { userRoutes } from "./features/users/routes.js";
 
 const frontendDir = path.resolve(
   fileURLToPath(new URL("../../frontend/public", import.meta.url)),
@@ -37,6 +38,7 @@ export function createApp(): Express {
   app.use("/stories", storyRoutes);
   app.use("/sprints", sprintRoutes);
   app.use("/ceremonies", ceremonyRoutes);
+  app.use("/users", userRoutes);
 
   // Serve the vanilla frontend (index.html, styles, scripts).
   app.use(express.static(frontendDir));
