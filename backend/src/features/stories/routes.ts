@@ -14,6 +14,7 @@ import {
   MoveStorySchema,
   AssignSprintSchema,
   AssignAssigneeSchema,
+  ReorderStorySchema,
 } from "./validation.js";
 import {
   listBacklog,
@@ -22,6 +23,7 @@ import {
   deleteStory,
   assignSprint,
   setAssignee,
+  reorderStory,
   moveStory,
 } from "./logic.js";
 
@@ -80,6 +82,15 @@ storyRoutes.patch("/:id/assign", ...po, async (req, res, next) => {
   try {
     const { assigneeId } = parseBody(AssignAssigneeSchema, req.body);
     sendData(res, 200, { story: await setAssignee(param(req, "id"), assigneeId, PID) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+storyRoutes.patch("/:id/reorder", ...po, async (req, res, next) => {
+  try {
+    const { direction } = parseBody(ReorderStorySchema, req.body);
+    sendData(res, 200, { story: await reorderStory(param(req, "id"), direction, PID) });
   } catch (err) {
     next(err);
   }

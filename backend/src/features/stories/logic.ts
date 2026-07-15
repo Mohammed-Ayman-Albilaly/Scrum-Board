@@ -129,6 +129,32 @@ export async function setAssignee(id: string, assigneeId: string | null, project
   return serializeStory(await findStory(id, projectId));
 }
 
+export async function reorderStory(id: string, direction: "UP" | "DOWN", projectId: string) {
+  const target = await findStory(id, projectId);
+  if (target.sprintId) throw new ValidationError("Only backlog stories can be reordered.");
+  const backlog = await db
+    .select()
+    .from(story)
+    .where(and(eq(story.projectId, projectId), isNull(story.sprintId)))
+    .orderBy(asc(story.priority), asc(story.createdAt));
+  const index = backlog.findIndex((s) => s.id === id);
+  const newIndex = direction === "UP" ? index - 1 : index + 1;
+  if (newIndex < 0 || newIndex >= backlog.length) return serializeStory(target); // at an edge; no-op
+  // Rebuild the order with the target moved one slot, then renumber priorities
+  // 0..n so the ordering is stable even when rows previously shared a priority.
+  const ordered = backlog.filter((s) => s.id !== id);
+  ordered.splice(newIndex, 0, target);
+  const now = new Date();
+  await db.transaction(async (tx) => {
+    let priority = 0;
+    for (const s of ordered) {
+      await tx.update(story).set({ priority, updatedAt: now }).where(eq(story.id, s.id));
+      priority += 1;
+    }
+  });
+  return serializeStory(await findStory(id, projectId));
+}
+
 export async function moveStory(id: string, column: string, projectId: string) {
   const row = await findStory(id, projectId);
   if (!row.sprintId) throw new ValidationError("Story is not in a sprint.");

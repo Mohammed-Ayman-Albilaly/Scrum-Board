@@ -32,3 +32,9 @@ export const AssignAssigneeSchema = Type.Object({
   assigneeId: Type.Union([Type.String({ minLength: 1, maxLength: 64 }), Type.Null()]),
 });
 export type AssignAssigneeInput = Static<typeof AssignAssigneeSchema>;
+
+// PO nudging a backlog story one slot up or down in priority order.
+export const ReorderStorySchema = Type.Object({
+  direction: Type.Union([Type.Literal("UP"), Type.Literal("DOWN")]),
+});
+export type ReorderStoryInput = Static<typeof ReorderStorySchema>;
