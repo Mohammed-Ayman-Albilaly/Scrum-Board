@@ -71,9 +71,12 @@ sprint dates on the header, backlog reorder, structured Planning + Retro renderi
 (The auth negative-path tests emit expected `Invalid password` / `User not found` warnings
 from Better Auth — those are asserted-for behavior, not failures.)
 
-**Pushed:** all assignee / sprint-date / reorder / structured-ceremony / multi-project work is
-on `origin/main`. Pushing to `main` triggers `.github/workflows/ci.yml` (install → typecheck →
-`vitest run`); confirm that run is green on GitHub Actions.
+**Pushed + CI green:** all assignee / sprint-date / reorder / structured-ceremony / multi-project
+work is on `origin/main`, and the GitHub Actions `CI` run for the head commit is **green**
+(install → typecheck → `vitest run`, 63/63). Note: CI had been red on every prior run — including
+the baseline `95920ab` — because the workflow pinned `version: 9` while `package.json` already
+declares `packageManager: pnpm@9.15.0`, so `pnpm/action-setup@v4` aborted at the *Install pnpm*
+step. Fixed by dropping the explicit `version:` input.
 
 ## Known gaps / next candidates
 
@@ -83,7 +86,6 @@ Every PRD feature is now implemented. Remaining items are refinements, not missi
 - ~~**Backlog reordering**~~ **Done 2026-07-15** — `PATCH /stories/:id/reorder` + ▲/▼ controls.
 - ~~**Structured retro / ceremonies**~~ **Done 2026-07-15** — per-type fields, Retro 3-col board.
 - ~~**Multi-project support**~~ **Done 2026-07-15** — projects + membership + scoping.
-- **Confirm CI green on GitHub.** Pushed 2026-07-16; verify the Actions run for `ci.yml` passed.
 - **Multiple assignees.** Single `assigneeId` today; "Assignee(s)" hints at multiple (needs a
   story⇄user junction table).
 - **Per-project roles.** Role is global (`user.role`); a per-project owner/admin role would let
@@ -105,6 +107,6 @@ Every PRD feature is now implemented. Remaining items are refinements, not missi
 
 ## Next up
 
-All PRD features are implemented, security-reviewed, covered by 63 passing tests, and pushed to
-`origin/main`. Next step: confirm the GitHub Actions run for the pushed commits is green, then
-pick a refinement from "Known gaps" (multiple assignees or per-project roles are the strongest).
+All PRD features are implemented, security-reviewed, covered by 63 passing tests, pushed to
+`origin/main`, and green on GitHub Actions CI. Next step: pick a refinement from "Known gaps"
+(multiple assignees or per-project roles are the strongest).
