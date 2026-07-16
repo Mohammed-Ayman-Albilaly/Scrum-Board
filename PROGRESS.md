@@ -48,6 +48,7 @@ earlier entry predated that commit; the table below reflects what is genuinely o
 | **Dialog system** (replaces native confirm/prompt) | ✅ (`dialog.js`, 5 call sites swapped) | — | ✅ `security-review-dialog-system.md` | ✅ suite green 63/63 + manual checklist | 🟡 (pending push) |
 | **Per-project roles** (multi-role, union perms) | ✅ (signup slimmed; `ctx.roles`; invite+members dialogs) | ✅ (`project_member_role`, migration 0004 w/ data copy, `requireRole` union check, SM-only invite + `PATCH roles`) | ✅ `security-review-per-project-roles.md` | ✅ `roles.test.ts` (9) — 71/71 | 🟡 (pending push) |
 | **Dashboard / profile / contacts / avatar** | ✅ (dashboard.html + profile.html + header.js w/ avatar popover; login → /dashboard.html; board reads `?projectId=`) | ✅ (`GET /users/contacts` derived from shared memberships; `PATCH /users/me` specialization-only) | ✅ `security-review-dashboard-profile.md` | ✅ `contacts.test.ts` (4) + `profile.test.ts` (6) — 81/81 | 🟡 (pending push) |
+| **Slim header + logout relocation** | ✅ (logout only in popover + profile, red `--color-danger`; header = brand·project·avatar; project bar → toolbar) | — | ✅ `security-review-header-logout.md` | ✅ suite green 81/81 + manual checklist | 🟡 (pending push) |
 
 **Multi-project (done 2026-07-15):** every user auto-enrolls in the shared `Team Project` on
 signup and can create more projects or invite existing users by email. A `project_member` join
@@ -91,7 +92,17 @@ union permissions, per-project scoping). ⚠️ Run `pnpm db:migrate` after pull
 `/profile.html` edits specialization via `PATCH /users/me`; shared `header.js` renders the
 avatar + hover popover on board/dashboard/profile; board opens via `?projectId=`.
 Contacts derived from shared memberships (`GET /users/contacts`), private projects don't
-leak (tested). **81/81 green.** Next: Change 3 (logout → popover/profile, slim header). Everything above is committed **and pushed to `origin/main`**
+leak (tested). **81/81 green.**
+
+**Change 3 (slim header + logout relocation) complete.** Logout now lives ONLY in the
+avatar popover (all pages) and on the profile page, styled `--color-danger` (#EF4444);
+the header shows brand + current project name + avatar; the project switcher +
+Invite/Members buttons moved to a toolbar under the board header.
+
+**All four approved changes (4 → 1 → 2 → 3) are code-complete, security-reviewed, and
+green (81/81).** Manual browser checklist still to exercise in one pass (dialog flows,
+dashboard→board?projectId=, popover roles per project, logout placements) — do this
+before calling the milestone shipped. Everything above is committed **and pushed to `origin/main`**
 on 2026-07-16. **Verified green locally on 2026-07-15** with a portable Node + pnpm 9.15.0,
 and additionally **exercised live in a browser** against the running dev server (project switch,
 sprint dates on the header, backlog reorder, structured Planning + Retro rendering):
