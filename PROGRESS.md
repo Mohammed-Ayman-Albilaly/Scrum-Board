@@ -46,7 +46,7 @@ earlier entry predated that commit; the table below reflects what is genuinely o
 | Story assignees (`GET /users` + `PATCH /stories/:id/assign`) | ✅ (tag + PO picker) | ✅ (assignee must be project member) | ✅ `docs/security-review-assignees.md` | ✅ `assignees.test.ts` (8) | ✅ |
 | CI pipeline | — | — | — | — | ✅ `.github/workflows/ci.yml` (typecheck + test) |
 | **Dialog system** (replaces native confirm/prompt) | ✅ (`dialog.js`, 5 call sites swapped) | — | ✅ `security-review-dialog-system.md` | ✅ suite green 63/63 + manual checklist | 🟡 (pending push) |
-| **Per-project roles** (multi-role, union perms) | ✅ (signup slimmed; `ctx.roles`; invite+members dialogs) | ✅ (`project_member_role`, migration 0004 w/ data copy, `requireRole` union check, SM-only invite + `PATCH roles`) | ✅ `security-review-per-project-roles.md` | ⬜ | ⬜ |
+| **Per-project roles** (multi-role, union perms) | ✅ (signup slimmed; `ctx.roles`; invite+members dialogs) | ✅ (`project_member_role`, migration 0004 w/ data copy, `requireRole` union check, SM-only invite + `PATCH roles`) | ✅ `security-review-per-project-roles.md` | ✅ `roles.test.ts` (9) — 71/71 | 🟡 (pending push) |
 
 **Multi-project (done 2026-07-15):** every user auto-enrolls in the shared `Team Project` on
 signup and can create more projects or invite existing users by email. A `project_member` join
@@ -79,9 +79,12 @@ INSERT…SELECT runs before the column drop; role-row count == membership count)
 (all 5 gate sites unchanged). Signup takes name/email/password only and enrolls into the
 default project as TEAM_MEMBER; project creators (founders) get SCRUM_MASTER; invites +
 role edits (`PATCH /projects/:id/members/:userId/roles`) are SM-only. Test harness
-refitted (fixtures carry `roles` arrays; `signIn` grants them via direct DB insert) —
-**62/62 green**. ⚠️ Run `pnpm db:migrate` after pulling. Next: Change 1 security review
-+ dedicated roles tests. Everything above is committed **and pushed to `origin/main`**
+refitted (fixtures carry `roles` arrays; `signIn` grants them via direct DB insert).
+**Change 1 complete through QA**: security review committed
+(`security-review-per-project-roles.md`) and `roles.test.ts` adds 9 tests (founder
+bootstrap, SM-only invites + PATCH roles incl. cross-project 403s, role-set validation,
+union permissions, per-project scoping) — **71/71 green**. ⚠️ Run `pnpm db:migrate`
+after pulling. Next: Change 2 (dashboard/profile/contacts/avatar). Everything above is committed **and pushed to `origin/main`**
 on 2026-07-16. **Verified green locally on 2026-07-15** with a portable Node + pnpm 9.15.0,
 and additionally **exercised live in a browser** against the running dev server (project switch,
 sprint dates on the header, backlog reorder, structured Planning + Retro rendering):
