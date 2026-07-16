@@ -1,7 +1,7 @@
 // Full profile page: identity, roles per project, and the editable
 // specialization (saved via PATCH /users/me).
 import { api, el, toast } from "./utils.js";
-import { renderHeader } from "./header.js";
+import { renderHeader, renderLogoutButton } from "./header.js";
 import { ROLE_LABELS, SPECIALIZATION_LABELS } from "./permissions.js";
 
 const app = () => document.getElementById("app");
@@ -27,6 +27,7 @@ function identityPanel(me) {
     el("p", { class: "profile-name", text: me.name }),
     el("p", { class: "muted", text: me.email }),
     specializationForm(me),
+    el("div", { class: "profile-logout" }, [renderLogoutButton()]),
   ]);
 }
 

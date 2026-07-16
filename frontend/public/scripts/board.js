@@ -55,6 +55,7 @@ async function load() {
   };
   app().replaceChildren(
     header(me, ctx),
+    el("div", { class: "board-toolbar" }, [projectBar(ctx)]),
     el("main", { class: "board" }, [
       backlogPanel(board.backlog, ctx),
       sprintsPanel(board.sprints, ctx),
@@ -65,11 +66,8 @@ async function load() {
 }
 
 function header(me, ctx) {
-  const logout = el("button", { class: "btn btn--ghost btn--sm", text: "Log out", onclick: async () => {
-    try { await api("/auth/logout", { method: "POST" }); } finally { window.location.href = "/"; }
-  } });
   const projectName = ctx.projects.find((p) => p.id === ctx.activeProjectId)?.name;
-  return renderHeader({ me, roles: ctx.roles, projectName, middle: projectBar(ctx), trailing: [logout] });
+  return renderHeader({ me, roles: ctx.roles, projectName });
 }
 
 function projectBar(ctx) {
