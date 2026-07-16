@@ -1,15 +1,22 @@
 import { describe, it, expect } from "vitest";
 import { createApp } from "../src/app.js";
-import { signIn } from "./helpers.js";
+import { signIn, grantProjectRoles } from "./helpers.js";
 
 const app = createApp();
 
-const userA = { name: "Alice PO", email: "alice@team.com", password: "password123", role: "PRODUCT_OWNER" } as const;
-const userB = { name: "Bob TM", email: "bob@team.com", password: "password123", role: "TEAM_MEMBER", specialization: "BACKEND" } as const;
-const userC = { name: "Cara PO", email: "cara@team.com", password: "password123", role: "PRODUCT_OWNER" } as const;
+const userA = { name: "Alice PO", email: "alice@team.com", password: "password123", roles: ["PRODUCT_OWNER"] } as const;
+const userB = { name: "Bob TM", email: "bob@team.com", password: "password123", roles: ["TEAM_MEMBER"] } as const;
+const userC = { name: "Cara PO", email: "cara@team.com", password: "password123", roles: ["PRODUCT_OWNER"] } as const;
+
+/** Create a project as `agent` and make them PO there too (founder is SM only). */
+async function createProjectAsPo(agent: Awaited<ReturnType<typeof signIn>>, email: string, name: string) {
+  const p = (await agent.post("/projects").send({ name })).body.data.project.id as string;
+  await grantProjectRoles(email, ["PRODUCT_OWNER", "SCRUM_MASTER"], p);
+  return p;
+}
 
 describe("projects & membership", () => {
-  it("auto-enrolls a new signup in the shared default project", async () => {
+  it("auto-enrolls a new signup in the shared default project as Team Member", async () => {
     const a = await signIn(app, userA);
     const { projects } = (await a.get("/projects")).body.data;
     expect(projects).toHaveLength(1);
@@ -29,7 +36,7 @@ describe("cross-project isolation", () => {
   it("blocks a non-member from reading or writing another project's board", async () => {
     const a = await signIn(app, userA);
     const b = await signIn(app, userB);
-    const p = (await a.post("/projects").send({ name: "Apollo" })).body.data.project.id;
+    const p = await createProjectAsPo(a, userA.email, "Apollo");
     await a.post("/stories").query({ projectId: p }).send({ title: "Secret" });
 
     expect((await b.get("/board").query({ projectId: p })).status).toBe(403);
@@ -39,7 +46,7 @@ describe("cross-project isolation", () => {
 
   it("does not leak a project's stories into another project's board", async () => {
     const a = await signIn(app, userA);
-    const p = (await a.post("/projects").send({ name: "Apollo" })).body.data.project.id;
+    const p = await createProjectAsPo(a, userA.email, "Apollo");
     await a.post("/stories").query({ projectId: p }).send({ title: "Only in Apollo" });
 
     // Default project board (no projectId) must not contain Apollo's story.
@@ -52,7 +59,7 @@ describe("cross-project isolation", () => {
 });
 
 describe("invitations", () => {
-  it("lets a member invite an existing user, who then gains access", async () => {
+  it("lets the founding Scrum Master invite an existing user, who then gains access", async () => {
     const a = await signIn(app, userA);
     const b = await signIn(app, userB);
     const p = (await a.post("/projects").send({ name: "Apollo" })).body.data.project.id;
@@ -84,7 +91,7 @@ describe("assignee must be a project member", () => {
   it("rejects assigning a story to a user outside its project (404)", async () => {
     const a = await signIn(app, userA);
     await signIn(app, userB); // exists, member of default only
-    const p = (await a.post("/projects").send({ name: "Apollo" })).body.data.project.id;
+    const p = await createProjectAsPo(a, userA.email, "Apollo");
     const storyId = (await a.post("/stories").query({ projectId: p }).send({ title: "Task" })).body.data.story.id;
 
     // Bob's id (from the default project directory, where both A and B are members).

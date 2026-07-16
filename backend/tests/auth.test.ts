@@ -6,15 +6,18 @@ import { PRODUCT_OWNER, SCRUM_MASTER, TEAM_MEMBER, signIn } from "./helpers.js";
 const app = createApp();
 
 describe("POST /auth/signup", () => {
-  it("creates a Product Owner and sets a hardened session cookie", async () => {
-    const res = await request(app).post("/auth/signup").send(PRODUCT_OWNER);
+  it("creates a user and sets a hardened session cookie", async () => {
+    const { roles, ...body } = PRODUCT_OWNER;
+    void roles;
+    const res = await request(app).post("/auth/signup").send(body);
 
     expect(res.status).toBe(201);
     expect(res.body.data.user).toMatchObject({
       email: PRODUCT_OWNER.email,
-      role: "PRODUCT_OWNER",
       specialization: null,
     });
+    // Roles are per project now — the user identity carries none.
+    expect(res.body.data.user).not.toHaveProperty("role");
     const cookie = String(res.headers["set-cookie"]?.[0] ?? "");
     expect(cookie).toMatch(/HttpOnly/i);
     expect(cookie).toMatch(/SameSite=Strict/i);
@@ -28,23 +31,21 @@ describe("POST /auth/signup", () => {
     expect(body).not.toMatch(/token/i);
   });
 
-  it("creates a Team Member with a specialization", async () => {
-    const res = await request(app).post("/auth/signup").send(TEAM_MEMBER);
+  it("ignores role/specialization smuggled into the signup body", async () => {
+    const res = await request(app)
+      .post("/auth/signup")
+      .send({ ...TEAM_MEMBER, role: "SCRUM_MASTER", specialization: "BACKEND" });
     expect(res.status).toBe(201);
-    expect(res.body.data.user.specialization).toBe("BACKEND");
+    // Unknown keys are stripped (mass-assignment guard): no role on the user,
+    // and specialization is not client-settable at signup (input: false).
+    expect(res.body.data.user).not.toHaveProperty("role");
+    expect(res.body.data.user.specialization).toBeNull();
   });
 
   it("rejects a duplicate email with 409", async () => {
     await request(app).post("/auth/signup").send(PRODUCT_OWNER);
     const res = await request(app).post("/auth/signup").send(PRODUCT_OWNER);
     expect(res.status).toBe(409);
-  });
-
-  it("rejects an invalid role with 400", async () => {
-    const res = await request(app)
-      .post("/auth/signup")
-      .send({ ...PRODUCT_OWNER, role: "ADMIN" });
-    expect(res.status).toBe(400);
   });
 
   it("rejects a short password with 400", async () => {

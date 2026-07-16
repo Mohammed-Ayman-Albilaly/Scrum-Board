@@ -10,13 +10,7 @@ import { env } from "../config/env.js";
 import { DEFAULT_PROJECT_ID } from "../config/constants.js";
 import { ensureMembership } from "../features/projects/logic.js";
 import { SignupSchema, LoginSchema } from "./validation.js";
-import {
-  parseBody,
-  assertSpecializationRule,
-  publicUser,
-  forwardCookies,
-  mapAuthError,
-} from "./logic.js";
+import { parseBody, publicUser, forwardCookies, mapAuthError } from "./logic.js";
 import { sendData } from "../lib/response.js";
 
 export const authRoutes = Router();
@@ -33,19 +27,13 @@ const authLimiter = rateLimit({
 authRoutes.post("/signup", sameOriginOnly, authLimiter, async (req, res, next) => {
   try {
     const body = parseBody(SignupSchema, req.body);
-    assertSpecializationRule(body.role, body.specialization);
     const { headers, response } = await auth.api.signUpEmail({
-      body: {
-        name: body.name,
-        email: body.email,
-        password: body.password,
-        role: body.role,
-        specialization: body.specialization,
-      },
+      body: { name: body.name, email: body.email, password: body.password },
       returnHeaders: true,
     });
-    // Enroll every new user in the shared team project so the default board
-    // works out of the box; they can create or be invited to more.
+    // Enroll every new user in the shared team project (as a Team Member) so
+    // the default board works out of the box; project Scrum Masters assign
+    // further roles per project.
     await ensureMembership(DEFAULT_PROJECT_ID, response.user.id);
     forwardCookies(res, headers);
     sendData(res, 201, { user: publicUser(response.user) });

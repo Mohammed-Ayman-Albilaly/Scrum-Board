@@ -9,8 +9,15 @@ import { parseBody } from "../../lib/validate.js";
 import { param } from "../../lib/http.js";
 import { sendData } from "../../lib/response.js";
 import { ForbiddenError } from "../../lib/errors.js";
-import { CreateProjectSchema, AddMemberSchema } from "./validation.js";
-import { listProjectsForUser, createProject, addMemberByEmail, isMember } from "./logic.js";
+import { ROLES } from "../../config/constants.js";
+import { CreateProjectSchema, AddMemberSchema, SetRolesSchema } from "./validation.js";
+import {
+  listProjectsForUser,
+  createProject,
+  addMemberByEmail,
+  hasProjectRole,
+  setMemberRoles,
+} from "./logic.js";
 
 export const projectRoutes = Router();
 
@@ -33,15 +40,34 @@ projectRoutes.post("/", sameOriginOnly, mutationLimiter, async (req, res, next) 
   }
 });
 
-// Invite an existing user by email. Only a current member may invite.
+/** 403 unless the requester holds SCRUM_MASTER in the `:id` project. */
+async function assertScrumMaster(projectId: string, userId: string): Promise<void> {
+  if (!(await hasProjectRole(projectId, userId, ROLES.SCRUM_MASTER))) {
+    throw new ForbiddenError("Only a Scrum Master of this project can manage members.");
+  }
+}
+
+// Invite an existing user by email + assign their role(s). Scrum Master only.
 projectRoutes.post("/:id/members", sameOriginOnly, mutationLimiter, async (req, res, next) => {
   try {
     const projectId = param(req, "id");
-    if (!(await isMember(projectId, req.user!.id))) {
-      throw new ForbiddenError("You are not a member of this project.");
-    }
-    const { email } = parseBody(AddMemberSchema, req.body);
-    sendData(res, 201, { project: await addMemberByEmail(projectId, email) });
+    await assertScrumMaster(projectId, req.user!.id);
+    const { email, roles } = parseBody(AddMemberSchema, req.body);
+    const project = await addMemberByEmail(projectId, email, roles ?? [ROLES.TEAM_MEMBER]);
+    sendData(res, 201, { project });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Replace a member's role set. Scrum Master only.
+projectRoutes.patch("/:id/members/:userId/roles", sameOriginOnly, mutationLimiter, async (req, res, next) => {
+  try {
+    const projectId = param(req, "id");
+    await assertScrumMaster(projectId, req.user!.id);
+    const { roles } = parseBody(SetRolesSchema, req.body);
+    await setMemberRoles(projectId, param(req, "userId"), roles);
+    sendData(res, 200, { success: true });
   } catch (err) {
     next(err);
   }

@@ -5,7 +5,7 @@ import { PRODUCT_OWNER, SCRUM_MASTER, TEAM_MEMBER, signIn } from "./helpers.js";
 
 const app = createApp();
 
-type Member = { id: string; name: string; role: string; specialization: string | null };
+type Member = { id: string; name: string; roles: string[]; specialization: string | null };
 
 /** Sign up PO/SM/TM and return them plus the Team Member's directory id. */
 async function seedTeam() {
@@ -13,7 +13,7 @@ async function seedTeam() {
   const sm = await signIn(app, SCRUM_MASTER);
   const tm = await signIn(app, TEAM_MEMBER);
   const members = (await po.get("/users")).body.data.members as Member[];
-  const teamMember = members.find((m) => m.role === "TEAM_MEMBER");
+  const teamMember = members.find((m) => m.name === TEAM_MEMBER.name);
   if (!teamMember) throw new Error("seed failed: no team member in directory");
   return { po, sm, tm, teamMemberId: teamMember.id, members };
 }
@@ -35,12 +35,15 @@ describe("GET /users directory", () => {
     for (const m of members) {
       expect(m).toHaveProperty("id");
       expect(m).toHaveProperty("name");
-      expect(m).toHaveProperty("role");
+      expect(m).toHaveProperty("roles");
+      expect(Array.isArray(m.roles)).toBe(true);
       expect(m).not.toHaveProperty("email");
       expect(m).not.toHaveProperty("password");
     }
-    const tm = members.find((m) => m.role === "TEAM_MEMBER");
-    expect(tm?.specialization).toBe("BACKEND");
+    const tm = members.find((m) => m.name === TEAM_MEMBER.name);
+    expect(tm?.roles).toEqual(["TEAM_MEMBER"]);
+    // Specialization is no longer set at signup; edited later on the profile.
+    expect(tm?.specialization).toBeNull();
   });
 });
 

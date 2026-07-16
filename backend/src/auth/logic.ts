@@ -1,24 +1,11 @@
-// Pure helpers for the auth routes: field rules, error mapping, response shaping.
+// Pure helpers for the auth routes: error mapping, response shaping.
 import type { Response } from "express";
 import { APIError } from "better-auth/api";
-import { ROLES, type Role, type Specialization } from "../config/constants.js";
+import type { Specialization } from "../config/constants.js";
 import { ValidationError, ConflictError, AuthError } from "../lib/errors.js";
 import type { SafeUser } from "../lib/types.js";
 
 export { parseBody } from "../lib/validate.js";
-
-/** Specialization is required for Team Members and forbidden for other roles. */
-export function assertSpecializationRule(
-  role: Role,
-  specialization: Specialization | undefined,
-): void {
-  if (role === ROLES.TEAM_MEMBER && !specialization) {
-    throw new ValidationError("Team Members must select a specialization.");
-  }
-  if (role !== ROLES.TEAM_MEMBER && specialization) {
-    throw new ValidationError("Only Team Members can have a specialization.");
-  }
-}
 
 /** Project a Better Auth user into the client-safe shape. */
 export function publicUser(u: Record<string, unknown>): SafeUser {
@@ -26,7 +13,6 @@ export function publicUser(u: Record<string, unknown>): SafeUser {
     id: String(u.id),
     name: String(u.name),
     email: String(u.email),
-    role: u.role as Role,
     specialization: (u.specialization ?? null) as Specialization | null,
   };
 }

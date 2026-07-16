@@ -1,6 +1,7 @@
 // Drizzle schema for Better Auth core tables (SQLite).
 // Field (JS) names are camelCase to match Better Auth's model expectations;
-// DB column names are snake_case. `role` + `specialization` are our custom fields.
+// DB column names are snake_case. `specialization` is our custom field; roles
+// live per project in `project_member_role` (features/projects/schema.ts).
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
 export const user = sqliteTable("user", {
@@ -11,7 +12,6 @@ export const user = sqliteTable("user", {
     .notNull()
     .default(false),
   image: text("image"),
-  role: text("role").notNull(),
   specialization: text("specialization"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),

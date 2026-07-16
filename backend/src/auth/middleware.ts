@@ -24,11 +24,19 @@ export async function requireAuth(
   }
 }
 
-/** Guard a route to specific roles. Assumes requireAuth ran first. */
+/**
+ * Guard a route to specific PER-PROJECT roles. Assumes requireAuth AND
+ * requireProjectMember ran first (the latter pins req.projectRoles for the
+ * active project). A user holding several roles gets the union of their
+ * permissions: the check passes if ANY allowed role is held.
+ */
 export function requireRole(...allowed: Role[]) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) return next(new AuthError());
-    if (!allowed.includes(req.user.role)) return next(new ForbiddenError());
+    const held = req.projectRoles;
+    if (!held || !allowed.some((role) => held.includes(role))) {
+      return next(new ForbiddenError());
+    }
     next();
   };
 }
@@ -38,7 +46,6 @@ function toSafeUser(u: Record<string, unknown>): SafeUser {
     id: String(u.id),
     name: String(u.name),
     email: String(u.email),
-    role: u.role as Role,
     specialization: (u.specialization ?? null) as SafeUser["specialization"],
   };
 }

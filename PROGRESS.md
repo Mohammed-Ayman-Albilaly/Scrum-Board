@@ -46,7 +46,7 @@ earlier entry predated that commit; the table below reflects what is genuinely o
 | Story assignees (`GET /users` + `PATCH /stories/:id/assign`) | ✅ (tag + PO picker) | ✅ (assignee must be project member) | ✅ `docs/security-review-assignees.md` | ✅ `assignees.test.ts` (8) | ✅ |
 | CI pipeline | — | — | — | — | ✅ `.github/workflows/ci.yml` (typecheck + test) |
 | **Dialog system** (replaces native confirm/prompt) | ✅ (`dialog.js`, 5 call sites swapped) | — | ✅ `security-review-dialog-system.md` | ✅ suite green 63/63 + manual checklist | 🟡 (pending push) |
-| **Per-project roles** (multi-role, union perms) | 🟡 (signup slimmed; `ctx.roles`; invite+members dialogs) | ⬜ | ⬜ | ⬜ | ⬜ |
+| **Per-project roles** (multi-role, union perms) | ✅ (signup slimmed; `ctx.roles`; invite+members dialogs) | ✅ (`project_member_role`, migration 0004 w/ data copy, `requireRole` union check, SM-only invite + `PATCH roles`) | ⬜ | ⬜ | ⬜ |
 
 **Multi-project (done 2026-07-15):** every user auto-enrolls in the shared `Team Project` on
 signup and can create more projects or invite existing users by email. A `project_member` join
@@ -70,14 +70,18 @@ roles → dashboard/profile → header/logout cleanup, each via the 5-stage pipe
 create project, invite member, close sprint, plus Esc/cancel/backdrop paths) to be
 exercised in-browser alongside Change 1's board work.
 
-**Change 1 (per-project roles), frontend stage committed.** Signup form no longer takes
-role/specialization; `permissions.js` predicates take a roles ARRAY (union semantics) +
-new `can.manageMembers` (SM); board reads `ctx.roles` from the active project's entry in
-`GET /projects`; invite dialog gained role checkboxes; new SM-only Members dialog PATCHes
-`/projects/:id/members/:userId/roles`. ⚠️ The board is **non-functional against the old
-backend** until the backend stage lands (`GET /projects` must return `roles`, `/users`
-members need `roles` arrays, signup must accept role-less bodies). Backend stage next —
-do not stop between these two stages on a shared branch. Everything above is committed **and pushed to `origin/main`**
+**Change 1 (per-project roles), frontend + backend stages committed.** Roles now live in
+`project_member_role` (PK project+user+role; multi-role; permissions = union).
+`user.role` is DROPPED by migration 0004, which first copies each member's global role
+into a role row for every project they belong to (data-copy ordering verified by dry-run:
+INSERT…SELECT runs before the column drop; role-row count == membership count).
+`requireProjectMember` pins `req.projectRoles`; `requireRole` checks the union against it
+(all 5 gate sites unchanged). Signup takes name/email/password only and enrolls into the
+default project as TEAM_MEMBER; project creators (founders) get SCRUM_MASTER; invites +
+role edits (`PATCH /projects/:id/members/:userId/roles`) are SM-only. Test harness
+refitted (fixtures carry `roles` arrays; `signIn` grants them via direct DB insert) —
+**62/62 green**. ⚠️ Run `pnpm db:migrate` after pulling. Next: Change 1 security review
++ dedicated roles tests. Everything above is committed **and pushed to `origin/main`**
 on 2026-07-16. **Verified green locally on 2026-07-15** with a portable Node + pnpm 9.15.0,
 and additionally **exercised live in a browser** against the running dev server (project switch,
 sprint dates on the header, backlog reorder, structured Planning + Retro rendering):

@@ -27,8 +27,9 @@ export const auth = betterAuth({
   },
   user: {
     additionalFields: {
-      role: { type: "string", required: true, input: true },
-      specialization: { type: "string", required: false, input: true },
+      // Not client-settable at signup (input: false); edited later via the
+      // profile API. Roles are per project (project_member_role), not here.
+      specialization: { type: "string", required: false, input: false },
     },
   },
   session: {
