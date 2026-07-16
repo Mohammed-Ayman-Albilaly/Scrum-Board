@@ -108,8 +108,10 @@ and additionally **exercised live in a browser** against the running dev server 
 sprint dates on the header, backlog reorder, structured Planning + Retro rendering):
 
 - `pnpm --filter backend typecheck` — exit 0, no type errors
-- `pnpm --filter backend test` — **63/63 passing** across 8 files: `auth` 13, `board` 12,
-  `permissions` 6, `assignees` 8, `sprint_dates` 4, `reorder` 5, `ceremonies` 7, `projects` 8
+- `pnpm --filter backend test` — **81/81 passing** across 11 files: `auth` 12, `board` 12,
+  `roles` 9, `projects` 8, `assignees` 8, `ceremonies` 7, `permissions` 6, `profile` 6,
+  `reorder` 5, `contacts` 4, `sprint_dates` 4 (re-verified 2026-07-16; earlier chains recorded
+  63/8 before the per-project-roles + dashboard/profile/contacts work landed)
 
 (The auth negative-path tests emit expected `Invalid password` / `User not found` warnings
 from Better Auth — those are asserted-for behavior, not failures.)
@@ -129,10 +131,14 @@ Every PRD feature is now implemented. Remaining items are refinements, not missi
 - ~~**Backlog reordering**~~ **Done 2026-07-15** — `PATCH /stories/:id/reorder` + ▲/▼ controls.
 - ~~**Structured retro / ceremonies**~~ **Done 2026-07-15** — per-type fields, Retro 3-col board.
 - ~~**Multi-project support**~~ **Done 2026-07-15** — projects + membership + scoping.
+- ~~**Per-project roles.**~~ **Done** — `project_member_role` table (migration 0004), SM-only
+  invite + `PATCH /projects/:id/members/:userId/roles`, role-less signup, union permissions.
+  Covered by `roles.test.ts` (9). Also added: dashboard + profile (`PATCH /users/me`) and a
+  contacts directory (`GET /users/contacts`).
 - **Multiple assignees.** Single `assigneeId` today; "Assignee(s)" hints at multiple (needs a
   story⇄user junction table).
-- **Per-project roles.** Role is global (`user.role`); a per-project owner/admin role would let
-  projects restrict who can invite. Any member can currently invite.
+- **"Last SM" guard.** An SM can demote the project's only SM, freezing member management (noted
+  in `security-review-per-project-roles.md` as accepted risk).
 - **bcrypt vs Better Auth.** Documented, accepted deviation (see the auth-stack note above).
 - **Legacy `ceremony.notes` column.** Superseded by `details`; left in place (always null) to
   keep migration 0002 additive. Drop in a later migration if desired.
@@ -148,8 +154,31 @@ Every PRD feature is now implemented. Remaining items are refinements, not missi
 - ~~No CI pipeline.~~ **Resolved** — `.github/workflows/ci.yml` runs `pnpm install
   --frozen-lockfile`, typecheck, then the test suite on every push to `main` and every PR.
 
+## Deliverables verification (2026-07-16)
+
+Independent audit against the graded deliverables, run on a fresh clone with Node 22 / pnpm
+9.15.0. Results:
+
+- **Rules file applied.** Every security rule in `CLAUDE.md` mapped to enforcing code
+  (helmet CSP, `sameOriginOnly` CSRF, HttpOnly/SameSite=Strict/Secure-in-prod cookies, scrypt
+  hashing, `SafeUser` hides the hash, `requireRole`/`requireProjectMember`, `sanitizeText`,
+  env `process.exit(1)`). See the mapping table in `README.md`.
+- **Tests green.** `pnpm --filter backend typecheck` exit 0; `pnpm --filter backend test`
+  **81/81 passing across 11 files**.
+- **Coverage.** `vitest run --coverage` → **90.39% statements / 90.39% lines / 83.95% branches**
+  overall (auth 98%, projects 97.7%, board 95.1%; only the process entrypoints `index.ts` /
+  `migrate.ts` sit at 0% by design). Added `@vitest/coverage-v8` as a dev dependency.
+- **No hardcoded secrets.** Full scan clean; only `.env.example` is tracked, `.env`/`*.db` are
+  git-ignored.
+- **Vulnerability documented + fixed.** CSRF (High) in `docs/security-review-landing-auth.md`,
+  fixed via `sameOriginOnly` and verified (cross-origin → 403). Plus a Medium trust-proxy fix.
+- Added `README.md` (deliverable explanations, applied-rules table, documented-tests table,
+  coverage, security vuln, deployment link).
+
+**Verdict: all four pass/fail criteria met.**
+
 ## Next up
 
-All PRD features are implemented, security-reviewed, covered by 63 passing tests, pushed to
-`origin/main`, and green on GitHub Actions CI. Next step: pick a refinement from "Known gaps"
-(multiple assignees or per-project roles are the strongest).
+All PRD features are implemented, security-reviewed, and covered by **81 passing tests
+(90.39% coverage)**. Next step: pick a refinement from "Known gaps" — the **"last SM" guard**
+and **multiple assignees** are the strongest candidates.
