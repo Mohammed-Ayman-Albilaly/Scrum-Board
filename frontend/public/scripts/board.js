@@ -179,7 +179,11 @@ function backlogPanel(stories, ctx) {
 
 function newStoryForm(ctx) {
   const title = el("input", { class: "field-input", placeholder: "New story title", maxlength: "200" });
-  const add = el("button", { class: "btn btn--primary btn--sm", text: "Add", onclick: () => submitStory(title, ctx) });
+  // type: "button" stops the click from ALSO firing the form's native submit
+  // (the implicit default for an untyped <button> in a <form>) — without it,
+  // one click fired both this onclick AND onsubmit below, double-posting.
+  const add = el("button", { class: "btn btn--primary btn--sm", type: "button", text: "Add", onclick: () => submitStory(title, ctx) });
+  // Enter-in-field still submits via this handler — the button never does.
   return el("form", { class: "inline-form", onsubmit: (e) => { e.preventDefault(); submitStory(title, ctx); } }, [title, add]);
 }
 
@@ -222,7 +226,8 @@ function newSprintForm(ctx) {
       toast(err.message, "error");
     }
   };
-  const add = el("button", { class: "btn btn--primary btn--sm", text: "Create sprint", onclick: create });
+  // See newStoryForm above: type "button" is required or the click double-fires.
+  const add = el("button", { class: "btn btn--primary btn--sm", type: "button", text: "Create sprint", onclick: create });
   return el("form", { class: "inline-form", onsubmit: (e) => { e.preventDefault(); create(); } }, [name, goal, start, end, add]);
 }
 

@@ -55,7 +55,9 @@ function ceremonyForm(ctx) {
   type.addEventListener("change", renderFields);
   renderFields();
 
-  const submit = el("button", { class: "btn btn--primary btn--sm", text: "Log ceremony", onclick: async () => {
+  // type: "button" — see board.js newStoryForm for why an untyped button
+  // inside a <form> double-fires against a submit handler.
+  const submit = el("button", { class: "btn btn--primary btn--sm", type: "button", text: "Log ceremony", onclick: async () => {
     const body = { type: type.value };
     if (sprintSel.value) body.sprintId = sprintSel.value;
     for (const [key, { input, kind }] of Object.entries(inputs)) {
