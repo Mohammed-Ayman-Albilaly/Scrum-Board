@@ -45,7 +45,7 @@ earlier entry predated that commit; the table below reflects what is genuinely o
 | Global Deployed list | ✅ (`deployedPanel`) | ✅ (part of `GET /board`) | ✅ | ✅ `board.test.ts` (backlog→deployed flow) | ✅ |
 | Story assignees (`GET /users` + `PATCH /stories/:id/assign`) | ✅ (tag + PO picker) | ✅ (assignee must be project member) | ✅ `docs/security-review-assignees.md` | ✅ `assignees.test.ts` (8) | ✅ |
 | CI pipeline | — | — | — | — | ✅ `.github/workflows/ci.yml` (typecheck + test) |
-| **Dialog system** (replaces native confirm/prompt) | ✅ (`dialog.js`, 5 call sites swapped) | — | ✅ `security-review-dialog-system.md` | ⬜ | ⬜ |
+| **Dialog system** (replaces native confirm/prompt) | ✅ (`dialog.js`, 5 call sites swapped) | — | ✅ `security-review-dialog-system.md` | ✅ suite green 63/63 + manual checklist | 🟡 (pending push) |
 
 **Multi-project (done 2026-07-15):** every user auto-enrolls in the shared `Team Project` on
 signup and can create more projects or invite existing users by email. A `project_member` join
@@ -62,12 +62,13 @@ MVP choice — switching would discard the working, reviewed auth stack.
 
 **2026-07-16 — 4-change feature set underway** (approved plan: dialog system → per-project
 roles → dashboard/profile → header/logout cleanup, each via the 5-stage pipeline).
-Currently on **Change 4 (dialog system), frontend stage**: `scripts/dialog.js` added
+**Change 4 (dialog system) complete through QA**: `scripts/dialog.js`
 (confirm/danger/input/custom variants, native `<dialog>`-based); all 5 native
-`confirm()`/`prompt()` call sites replaced (cards.js delete + rename, board.js create
-project + invite + close sprint — the two sync `&&` gates are now async). Manual
-verification checklist for the QA stage: delete story, rename story, create project,
-invite member, close sprint — each via dialog, plus Esc/cancel/backdrop-click paths. Everything above is committed **and pushed to `origin/main`**
+`confirm()`/`prompt()` call sites replaced. Backend suite unaffected — typecheck clean +
+63/63 tests green on 2026-07-16. Manual dialog checklist (delete story, rename story,
+create project, invite member, close sprint, plus Esc/cancel/backdrop paths) to be
+exercised in-browser alongside Change 1's board work. Next: Change 1 (per-project roles),
+frontend stage. Everything above is committed **and pushed to `origin/main`**
 on 2026-07-16. **Verified green locally on 2026-07-15** with a portable Node + pnpm 9.15.0,
 and additionally **exercised live in a browser** against the running dev server (project switch,
 sprint dates on the header, backlog reorder, structured Planning + Retro rendering):
