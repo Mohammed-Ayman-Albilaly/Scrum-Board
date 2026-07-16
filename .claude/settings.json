@@ -17,7 +17,19 @@
       "Bash(curl -s -o /dev/null -w \"GET /health -> HTTP %{http_code}\\\\n\" http://localhost:3000/health)",
       "Bash(curl -s -X POST http://localhost:3000/auth/signup -H 'Content-Type: application/json' -H 'Origin: http://localhost:3000' -d '{\"name\":\"Test User\",\"email\":\"test.user@team.com\",\"password\":\"password123\",\"role\":\"SCRUM_MASTER\"}' -w '\\\\n[HTTP %{http_code}]\\\\n')",
       "Bash(ps -W)",
-      "Bash(\"C:/Users/Hmood/pnpm-home/pnpm.exe\" test *)"
+      "Bash(\"C:/Users/Hmood/pnpm-home/pnpm.exe\" test *)",
+      "Bash(pnpm exec *)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('tsconfig.json','utf8'\\)\\); console.log\\('valid json'\\)\")",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('package.json','utf8'\\)\\); console.log\\('valid json'\\)\")",
+      "Bash(pnpm install *)",
+      "Bash(pnpm --filter backend typecheck)",
+      "Bash(pnpm --filter backend test)",
+      "Bash(sed -i 's/can\\\\.logCeremonies\\(ctx\\\\.role\\)/can.logCeremonies\\(ctx.roles\\)/; s/can\\\\.editBacklog\\(ctx\\\\.role\\)/can.editBacklog\\(ctx.roles\\)/; s/can\\\\.assignStory\\(ctx\\\\.role\\)/can.assignStory\\(ctx.roles\\)/; s/can\\\\.moveStory\\(ctx\\\\.role\\)/can.moveStory\\(ctx.roles\\)/; s/can\\\\.manageSprints\\(ctx\\\\.role\\)/can.manageSprints\\(ctx.roles\\)/' ceremonies.js cards.js board.js)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(pnpm --filter backend db:generate)",
+      "Bash(node -e ' *)"
     ]
   }
 }

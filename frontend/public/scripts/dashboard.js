@@ -36,6 +36,7 @@ function roleBadges(roles) {
 
 function projectCard(p) {
   return el("article", { class: "card project-card" }, [
+    el("span", { class: "project-card__mark", "aria-hidden": "true", text: (p.name.trim()[0] ?? "?").toUpperCase() }),
     el("div", { class: "card__header" }, [el("span", { class: "card__title", text: p.name })]),
     el("div", { class: "project-card__roles" }, roleBadges(p.roles)),
     el("button", {
@@ -49,7 +50,13 @@ function projectCard(p) {
 function projectsPanel(projects) {
   const create = el("button", { class: "btn btn--primary", text: "+ Create Project", onclick: createProjectFlow });
   return el("section", { class: "panel dashboard__projects" }, [
-    el("div", { class: "panel__head" }, [el("h2", { class: "panel__title", text: "Your projects" }), create]),
+    el("div", { class: "panel__head" }, [
+      el("h2", { class: "panel__title" }, [
+        el("span", { text: "Your projects" }),
+        el("span", { class: "panel__count", text: String(projects.length) }),
+      ]),
+      create,
+    ]),
     el("div", { class: "project-grid" },
       projects.length ? projects.map(projectCard) : [el("p", { class: "muted", text: "No projects yet — create one." })]),
   ]);

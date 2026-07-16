@@ -1,4 +1,5 @@
-/* layout.css — board page: header, region grid, sprint sub-columns, cards. */
+/* layout.css — app header, board regions, sprint stage rail, cards,
+   ceremonies, dashboard + profile pages. */
 
 .board-page {
   background: var(--color-bg);
@@ -9,12 +10,12 @@
   color: var(--color-text-muted);
 }
 
-/* Header */
+/* ---- Header ---- */
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.85rem 1.5rem;
+  padding: 0.7rem 1.5rem;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
   position: sticky;
@@ -23,7 +24,25 @@
 }
 
 .app-header .brand-name {
-  color: var(--color-primary);
+  color: var(--color-primary-deep);
+  font-size: 1.05rem;
+}
+
+.app-header__left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.app-header__home {
+  text-decoration: none;
+}
+
+.app-header__project {
+  font-weight: 600;
+  font-size: 0.88rem;
+  border-left: 1px solid var(--color-border);
+  padding-left: 0.85rem;
 }
 
 .app-header__user {
@@ -32,31 +51,52 @@
   gap: 0.75rem;
 }
 
-.project-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
+.user-name {
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 @media (max-width: 720px) {
   .app-header { flex-wrap: wrap; gap: 0.5rem; }
 }
 
-.user-name {
-  font-weight: 600;
-  font-size: 0.9rem;
+/* Project switcher toolbar: floats on the canvas below the header. */
+.board-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 0.9rem 1.5rem 0;
 }
 
-/* Region grid: backlog | sprints | deployed | ceremonies */
+.project-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.project-bar > .muted {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.board-toolbar .card__control {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-primary-deep);
+  padding: 0.4rem 0.6rem;
+}
+
+/* ---- Region grid: backlog | sprints | deployed | ceremonies ---- */
 .board {
   display: grid;
   grid-template-columns: 300px 1fr 300px;
   grid-template-areas:
     "backlog sprints deployed"
     "ceremonies ceremonies ceremonies";
-  gap: 1rem;
-  padding: 1.25rem 1.5rem;
+  gap: 1.1rem;
+  padding: 1rem 1.5rem 2rem;
   align-items: start;
 }
 
@@ -68,13 +108,40 @@
 .panel {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  padding: 1.05rem 1.1rem;
 }
 
+/* Sprints are first-class cards; their region sheds the panel chrome. */
+.panel--sprints {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* Panel titles are quiet uppercase labels; the content carries the weight. */
 .panel__title {
-  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--color-primary-deep);
   margin-bottom: 0.85rem;
+}
+
+.panel__count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-well);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
 }
 
 .stack {
@@ -88,13 +155,14 @@
   font-size: 0.85rem;
 }
 
-/* Sprint block */
+/* ---- Sprint block ---- */
 .sprint {
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 0.75rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  padding: 0.9rem 1rem;
   margin-bottom: 1rem;
-  background: var(--color-bg);
 }
 
 .sprint__head {
@@ -102,11 +170,18 @@
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
 }
 
 .sprint__name {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-primary-deep);
+}
+
+.sprint__dates {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
 }
 
 .sprint__cols {
@@ -115,46 +190,97 @@
   gap: 0.6rem;
 }
 
+/* The stage rail — each fixed sub-column carries its stage color as a top
+   rail + header dot, so the Scrum flow reads left to right at a glance. */
 .sprint-col {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 0.5rem;
+  --stage: var(--color-border);
+  position: relative;
+  overflow: hidden;
+  background: var(--color-well);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 10px;
+  padding: 0.6rem 0.55rem 0.55rem;
 }
 
+.sprint-col::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--stage);
+}
+
+.sprint-col--backlog { --stage: var(--badge-unrefined); }
+.sprint-col--dev { --stage: var(--badge-dev); }
+.sprint-col--testing { --stage: var(--badge-testing); }
+.sprint-col--deployed { --stage: var(--badge-deployed); }
+
 .sprint-col__title {
-  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: var(--color-text-muted);
   margin-bottom: 0.5rem;
 }
 
-/* Story card */
+.sprint-col > .sprint-col__title::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--stage);
+}
+
+.sprint-col__count {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-text-soft);
+  margin-left: auto;
+}
+
+/* ---- Story card ---- */
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 0.6rem;
+  border-radius: 9px;
+  padding: 0.65rem 0.7rem;
   box-shadow: var(--shadow-card);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+  border-color: #cfd8d6;
+  box-shadow: var(--shadow-raised);
 }
 
 .card__header {
   display: flex;
-  align-items: flex-start;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 0.4rem;
+  flex-wrap: wrap; /* narrow sub-columns: badge + points drop below the title */
+  gap: 0.25rem 0.4rem;
 }
 
 .card__title {
+  flex: 1 1 auto;
+  min-width: 55%;
   font-weight: 600;
-  font-size: 0.88rem;
+  font-size: 0.875rem;
+  line-height: 1.35;
 }
 
 .card__points {
-  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
   font-weight: 600;
   color: var(--color-primary);
+  white-space: nowrap;
 }
 
 .card__desc {
@@ -168,7 +294,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 0.35rem;
-  margin-top: 0.35rem;
+  margin-top: 0.4rem;
 }
 
 .card__assignee-name {
@@ -181,18 +307,25 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
-  margin-top: 0.5rem;
+  margin-top: 0.55rem;
 }
 
 .card__control {
   font-size: 0.75rem;
-  padding: 0.2rem 0.3rem;
+  padding: 0.28rem 0.4rem;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: 7px;
   background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
 }
 
-/* Inline forms (add story / sprint / ceremony) */
+.card__control:hover {
+  border-color: var(--color-secondary);
+}
+
+/* ---- Inline forms (add story / sprint / ceremony) ---- */
 .inline-form,
 .ceremony-form {
   display: flex;
@@ -204,10 +337,17 @@
 .field-input {
   flex: 1 1 auto;
   min-width: 120px;
-  padding: 0.45rem 0.55rem;
+  padding: 0.5rem 0.6rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
   font-size: 0.85rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field-input::placeholder {
+  color: var(--color-text-soft);
 }
 
 .field-input:focus {
@@ -216,7 +356,7 @@
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
 }
 
-/* Ceremonies */
+/* ---- Ceremonies ---- */
 .ceremony-list {
   display: flex;
   flex-direction: column;
@@ -224,16 +364,21 @@
 }
 
 .ceremony-item {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 0.55rem;
-  background: var(--color-bg);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 10px;
+  padding: 0.65rem 0.7rem;
+  background: var(--color-well);
 }
 
 .ceremony-item__head {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.ceremony-item__head .muted {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
 }
 
 /* Per-type ceremony form fields (stacked below the type/sprint selectors) */
@@ -262,10 +407,12 @@
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  font-size: 0.85rem;
 }
 
 .ceremony-detail__label {
   font-weight: 600;
+  color: var(--color-primary-deep);
 }
 
 .retro-board {
@@ -280,22 +427,24 @@
 }
 
 .retro-col {
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-soft);
   border-radius: var(--radius-sm);
-  padding: 0.45rem;
+  padding: 0.5rem 0.55rem;
   background: var(--color-surface);
 }
 
 .retro-col__title {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin-bottom: 0.25rem;
   color: var(--color-primary);
 }
 
-/* Buttons: small + ghost variants (base .btn lives in components.css) */
+/* ---- Buttons: small + ghost variants (base .btn lives in components.css) */
 .btn--sm {
-  padding: 0.4rem 0.7rem;
+  padding: 0.35rem 0.65rem;
   font-size: 0.8rem;
 }
 
@@ -306,7 +455,8 @@
 }
 
 .btn--ghost:hover {
-  background: var(--color-bg);
+  background: var(--color-well);
+  border-color: var(--color-secondary);
 }
 
 .btn:disabled {
@@ -314,7 +464,7 @@
   cursor: not-allowed;
 }
 
-/* Toasts */
+/* ---- Toasts ---- */
 .toasts {
   position: fixed;
   bottom: 1.25rem;
@@ -326,16 +476,18 @@
 }
 
 .toast {
-  padding: 0.6rem 0.9rem;
+  padding: 0.65rem 0.9rem;
   border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-primary);
+  background: var(--color-primary-deep);
   color: var(--color-text-invert);
-  box-shadow: var(--shadow-card-lg);
+  box-shadow: var(--shadow-overlay);
   font-size: 0.85rem;
 }
 
-.toast--info { background: var(--color-primary); }
-.toast--success { background: var(--badge-deployed); }
-.toast--error { background: var(--color-error); }
+.toast--info { border-left-color: var(--color-secondary); }
+.toast--success { border-left-color: var(--badge-deployed); }
+.toast--error { border-left-color: var(--color-danger); }
 
 @media (max-width: 1000px) {
   .board {
@@ -351,35 +503,19 @@
   }
 }
 
-/* Dashboard + profile pages (see scripts/dashboard.js, scripts/profile.js) */
-.app-header__left {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-}
-
-.app-header__home {
-  text-decoration: none;
-}
-
-.app-header__project {
-  font-weight: 600;
-  border-left: 1px solid var(--color-border);
-  padding-left: 0.85rem;
-}
-
+/* ---- Dashboard + profile pages ---- */
 .dashboard {
   display: grid;
   grid-template-columns: 1fr 320px;
-  gap: 1rem;
-  padding: 1.25rem 1.5rem;
+  gap: 1.1rem;
+  padding: 1.25rem 1.5rem 2rem;
   align-items: start;
 }
 
 .dashboard__side {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.1rem;
 }
 
 @media (max-width: 860px) {
@@ -405,14 +541,28 @@
 
 .project-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.85rem;
 }
 
 .project-card {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  padding: 0.9rem;
+}
+
+.project-card__mark {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--color-well);
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 1rem;
 }
 
 .project-card__roles {
@@ -421,8 +571,15 @@
   gap: 0.3rem;
 }
 
+.project-card .btn {
+  margin-top: 0.25rem;
+  align-self: flex-start;
+}
+
 .profile-name {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--color-primary-deep);
 }
 
 .profile-roles,
@@ -430,7 +587,6 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
 }
 
 .profile-role-row,
@@ -439,8 +595,13 @@
   justify-content: space-between;
   gap: 0.6rem;
   font-size: 0.88rem;
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--color-border-soft);
+  padding: 0.5rem 0;
+}
+
+.profile-role-row:last-child,
+.contact-row:last-child {
+  border-bottom: none;
 }
 
 .contact-row__projects {
@@ -451,15 +612,6 @@
   margin-top: 0.85rem;
 }
 
-/* Slim header era: project switcher lives in a toolbar under the header. */
-.board-toolbar {
-  display: flex;
-  align-items: center;
-  padding: 0.6rem 1.5rem;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-}
-
 .popover__logout {
   margin-top: 0.5rem;
   align-self: stretch;
@@ -468,5 +620,5 @@
 .profile-logout {
   margin-top: 1rem;
   padding-top: 0.85rem;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border-soft);
 }

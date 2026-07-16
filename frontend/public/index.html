@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles/main.css" />
@@ -40,6 +40,30 @@
             Move stories through the sprint workflow.
           </li>
         </ul>
+
+        <!-- The product, reduced to its four stages: backlog → dev → testing → deployed -->
+        <div class="mini-board" aria-hidden="true">
+          <div class="mini-board__col">
+            <span class="mini-board__rail mini-board__rail--backlog"></span>
+            <span class="mini-board__card"></span>
+            <span class="mini-board__card"></span>
+            <span class="mini-board__card"></span>
+          </div>
+          <div class="mini-board__col">
+            <span class="mini-board__rail mini-board__rail--dev"></span>
+            <span class="mini-board__card"></span>
+            <span class="mini-board__card"></span>
+          </div>
+          <div class="mini-board__col">
+            <span class="mini-board__rail mini-board__rail--testing"></span>
+            <span class="mini-board__card"></span>
+          </div>
+          <div class="mini-board__col">
+            <span class="mini-board__rail mini-board__rail--deployed"></span>
+            <span class="mini-board__card mini-board__card--deployed"></span>
+            <span class="mini-board__card"></span>
+          </div>
+        </div>
       </section>
 
       <!-- Right: auth panel -->

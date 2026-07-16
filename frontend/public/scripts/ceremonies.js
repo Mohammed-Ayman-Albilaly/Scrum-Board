@@ -110,7 +110,10 @@ function ceremonyItem(c) {
 }
 
 export function renderCeremoniesPanel(ctx) {
-  const children = [el("h2", { class: "panel__title", text: "Ceremonies" })];
+  const children = [el("h2", { class: "panel__title" }, [
+    el("span", { text: "Ceremonies" }),
+    el("span", { class: "panel__count", text: String(ctx.ceremonies.length) }),
+  ])];
   if (can.logCeremonies(ctx.roles)) children.push(ceremonyForm(ctx));
   const list = ctx.ceremonies.length
     ? ctx.ceremonies.map(ceremonyItem)

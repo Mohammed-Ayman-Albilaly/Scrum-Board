@@ -11,11 +11,12 @@ import { renderCeremoniesPanel } from "./ceremonies.js";
 // kept in memory across re-renders; falls back to the first project.
 let activeProjectId = new URLSearchParams(window.location.search).get("projectId");
 
+// [key, label, slug] — slug drives the stage-colored rail (see layout.css).
 const SPRINT_COLS = [
-  ["SPRINT_BACKLOG", "Sprint Backlog"],
-  ["UNDER_DEVELOPMENT", "Under Development"],
-  ["UNDER_TESTING", "Under Testing"],
-  ["DEPLOYED", "Deployed"],
+  ["SPRINT_BACKLOG", "Sprint Backlog", "backlog"],
+  ["UNDER_DEVELOPMENT", "Under Development", "dev"],
+  ["UNDER_TESTING", "Under Testing", "testing"],
+  ["DEPLOYED", "Deployed", "deployed"],
 ];
 
 const app = () => document.getElementById("app");
@@ -160,8 +161,15 @@ async function membersFlow(ctx) {
   }
 }
 
+function panelTitle(text, count) {
+  return el("h2", { class: "panel__title" }, [
+    el("span", { text }),
+    el("span", { class: "panel__count", text: String(count) }),
+  ]);
+}
+
 function backlogPanel(stories, ctx) {
-  const children = [el("h2", { class: "panel__title", text: "Product Backlog" })];
+  const children = [panelTitle("Product Backlog", stories.length)];
   if (can.editBacklog(ctx.roles)) children.push(newStoryForm(ctx));
   children.push(el("div", { class: "stack" }, stories.length
     ? stories.map((s, i) => renderStoryCard(s, ctx, { first: i === 0, last: i === stories.length - 1 }))
@@ -243,10 +251,13 @@ function sprintBlock(sp, ctx) {
       if (ok) closeSprint(sp.id, ctx);
     } }));
   }
-  const cols = el("div", { class: "sprint__cols" }, SPRINT_COLS.map(([key, label]) => {
+  const cols = el("div", { class: "sprint__cols" }, SPRINT_COLS.map(([key, label, slug]) => {
     const items = sp.columns?.[key] ?? [];
-    return el("div", { class: "sprint-col" }, [
-      el("h3", { class: "sprint-col__title", text: label }),
+    return el("div", { class: `sprint-col sprint-col--${slug}` }, [
+      el("h3", { class: "sprint-col__title" }, [
+        el("span", { text: label }),
+        el("span", { class: "sprint-col__count", text: String(items.length) }),
+      ]),
       el("div", { class: "stack" }, items.length ? items.map((s) => renderStoryCard(s, ctx)) : [empty("—")]),
     ]);
   }));
@@ -263,7 +274,7 @@ async function closeSprint(id, ctx) {
 }
 
 function deployedPanel(stories, ctx) {
-  const children = [el("h2", { class: "panel__title", text: "Deployed" })];
+  const children = [panelTitle("Deployed", stories.length)];
   if (!stories.length) {
     children.push(empty("Nothing deployed yet."));
     return el("section", { class: "panel panel--deployed" }, children);
