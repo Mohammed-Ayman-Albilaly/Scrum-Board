@@ -2,11 +2,14 @@
 // three regions (backlog | sprints | deployed) plus the ceremonies panel.
 import { api, el, toast, setProjectId } from "./utils.js";
 import { customDialog, dangerDialog, inputDialog } from "./dialog.js";
+import { renderHeader } from "./header.js";
 import { can, ROLES, ROLE_LABELS } from "./permissions.js";
 import { renderStoryCard } from "./cards.js";
 import { renderCeremoniesPanel } from "./ceremonies.js";
 
-let activeProjectId = null;
+// Seeded from ?projectId= (how the dashboard opens a specific board), then
+// kept in memory across re-renders; falls back to the first project.
+let activeProjectId = new URLSearchParams(window.location.search).get("projectId");
 
 const SPRINT_COLS = [
   ["SPRINT_BACKLOG", "Sprint Backlog"],
@@ -65,17 +68,8 @@ function header(me, ctx) {
   const logout = el("button", { class: "btn btn--ghost btn--sm", text: "Log out", onclick: async () => {
     try { await api("/auth/logout", { method: "POST" }); } finally { window.location.href = "/"; }
   } });
-  return el("header", { class: "app-header" }, [
-    el("div", { class: "landing__brand" }, [el("span", { class: "brand-mark", "aria-hidden": "true" }), el("span", { class: "brand-name", text: "ScrumBoard" })]),
-    projectBar(ctx),
-    el("div", { class: "app-header__user" }, [
-      el("span", { class: "user-name", text: me.name }),
-      ...(ctx.roles.length
-        ? ctx.roles.map((r) => el("span", { class: "badge badge--ready", text: ROLE_LABELS[r] ?? r }))
-        : [el("span", { class: "badge badge--unrefined", text: "Member" })]),
-      logout,
-    ]),
-  ]);
+  const projectName = ctx.projects.find((p) => p.id === ctx.activeProjectId)?.name;
+  return renderHeader({ me, roles: ctx.roles, projectName, middle: projectBar(ctx), trailing: [logout] });
 }
 
 function projectBar(ctx) {

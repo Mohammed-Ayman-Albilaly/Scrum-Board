@@ -1,10 +1,10 @@
 // auth.js — landing page login/signup UI behavior.
-// Posts credentials to the auth API and redirects to the board on success.
+// Posts credentials to the auth API and redirects to the dashboard on success.
 
 "use strict";
 
 const MIN_PASSWORD_LENGTH = 8;
-const BOARD_URL = "/board.html";
+const DASHBOARD_URL = "/dashboard.html";
 const ENDPOINTS = { "panel-login": "/auth/login", "panel-signup": "/auth/signup" };
 
 /** Switch the active auth tab and its associated form panel. */
@@ -117,7 +117,7 @@ async function handleSubmit(event) {
   try {
     const { status, body } = await postJson(ENDPOINTS[form.id], buildPayload(form));
     if (status >= 200 && status < 300) {
-      window.location.href = BOARD_URL;
+      window.location.href = DASHBOARD_URL;
       return;
     }
     showFormNote(form, body?.error?.message ?? "Something went wrong. Please try again.", "error");
