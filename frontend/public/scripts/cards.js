@@ -111,8 +111,8 @@ export function renderStoryCard(story, ctx, opts = {}) {
   if (story.description) children.push(el("p", { class: "card__desc", text: story.description }));
   const tag = assigneeTag(story, ctx);
   if (tag) children.push(tag);
-  if (!opts.readOnly && !story.sprintId && can.editBacklog(ctx.role)) children.push(backlogControls(story, ctx, opts));
-  if (!opts.readOnly && !locked && can.assignStory(ctx.role)) children.push(assigneeControls(story, ctx));
-  if (!opts.readOnly && story.sprintId && !locked && can.moveStory(ctx.role)) children.push(moveControls(story, ctx));
+  if (!opts.readOnly && !story.sprintId && can.editBacklog(ctx.roles)) children.push(backlogControls(story, ctx, opts));
+  if (!opts.readOnly && !locked && can.assignStory(ctx.roles)) children.push(assigneeControls(story, ctx));
+  if (!opts.readOnly && story.sprintId && !locked && can.moveStory(ctx.roles)) children.push(moveControls(story, ctx));
   return el("article", { class: "card" }, children);
 }

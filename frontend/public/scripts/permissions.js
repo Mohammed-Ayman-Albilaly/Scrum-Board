@@ -7,13 +7,18 @@ export const ROLES = {
   SCRUM_MASTER: "SCRUM_MASTER",
 };
 
+// Each predicate takes the user's roles for the ACTIVE project (an array —
+// users can hold several roles per project; permissions are the union).
+const has = (roles, role) => Array.isArray(roles) && roles.includes(role);
+
 export const can = {
-  editBacklog: (role) => role === ROLES.PRODUCT_OWNER,
-  assignSprint: (role) => role === ROLES.PRODUCT_OWNER,
-  assignStory: (role) => role === ROLES.PRODUCT_OWNER,
-  manageSprints: (role) => role === ROLES.SCRUM_MASTER,
-  logCeremonies: (role) => role === ROLES.SCRUM_MASTER,
-  moveStory: (role) => role === ROLES.PRODUCT_OWNER || role === ROLES.TEAM_MEMBER,
+  editBacklog: (roles) => has(roles, ROLES.PRODUCT_OWNER),
+  assignSprint: (roles) => has(roles, ROLES.PRODUCT_OWNER),
+  assignStory: (roles) => has(roles, ROLES.PRODUCT_OWNER),
+  manageSprints: (roles) => has(roles, ROLES.SCRUM_MASTER),
+  logCeremonies: (roles) => has(roles, ROLES.SCRUM_MASTER),
+  manageMembers: (roles) => has(roles, ROLES.SCRUM_MASTER),
+  moveStory: (roles) => has(roles, ROLES.PRODUCT_OWNER) || has(roles, ROLES.TEAM_MEMBER),
 };
 
 export const SPECIALIZATION_LABELS = {

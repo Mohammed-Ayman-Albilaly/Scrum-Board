@@ -46,6 +46,7 @@ earlier entry predated that commit; the table below reflects what is genuinely o
 | Story assignees (`GET /users` + `PATCH /stories/:id/assign`) | ✅ (tag + PO picker) | ✅ (assignee must be project member) | ✅ `docs/security-review-assignees.md` | ✅ `assignees.test.ts` (8) | ✅ |
 | CI pipeline | — | — | — | — | ✅ `.github/workflows/ci.yml` (typecheck + test) |
 | **Dialog system** (replaces native confirm/prompt) | ✅ (`dialog.js`, 5 call sites swapped) | — | ✅ `security-review-dialog-system.md` | ✅ suite green 63/63 + manual checklist | 🟡 (pending push) |
+| **Per-project roles** (multi-role, union perms) | 🟡 (signup slimmed; `ctx.roles`; invite+members dialogs) | ⬜ | ⬜ | ⬜ | ⬜ |
 
 **Multi-project (done 2026-07-15):** every user auto-enrolls in the shared `Team Project` on
 signup and can create more projects or invite existing users by email. A `project_member` join
@@ -67,8 +68,16 @@ roles → dashboard/profile → header/logout cleanup, each via the 5-stage pipe
 `confirm()`/`prompt()` call sites replaced. Backend suite unaffected — typecheck clean +
 63/63 tests green on 2026-07-16. Manual dialog checklist (delete story, rename story,
 create project, invite member, close sprint, plus Esc/cancel/backdrop paths) to be
-exercised in-browser alongside Change 1's board work. Next: Change 1 (per-project roles),
-frontend stage. Everything above is committed **and pushed to `origin/main`**
+exercised in-browser alongside Change 1's board work.
+
+**Change 1 (per-project roles), frontend stage committed.** Signup form no longer takes
+role/specialization; `permissions.js` predicates take a roles ARRAY (union semantics) +
+new `can.manageMembers` (SM); board reads `ctx.roles` from the active project's entry in
+`GET /projects`; invite dialog gained role checkboxes; new SM-only Members dialog PATCHes
+`/projects/:id/members/:userId/roles`. ⚠️ The board is **non-functional against the old
+backend** until the backend stage lands (`GET /projects` must return `roles`, `/users`
+members need `roles` arrays, signup must accept role-less bodies). Backend stage next —
+do not stop between these two stages on a shared branch. Everything above is committed **and pushed to `origin/main`**
 on 2026-07-16. **Verified green locally on 2026-07-15** with a portable Node + pnpm 9.15.0,
 and additionally **exercised live in a browser** against the running dev server (project switch,
 sprint dates on the header, backlog reorder, structured Planning + Retro rendering):

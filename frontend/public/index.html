@@ -181,43 +181,8 @@
               ></p>
             </div>
 
-            <div class="field">
-              <label for="signup-role">Role</label>
-              <select id="signup-role" name="role" required>
-                <option value="" disabled selected>
-                  Select your Scrum role
-                </option>
-                <option value="PRODUCT_OWNER">Product Owner</option>
-                <option value="SCRUM_MASTER">Scrum Master</option>
-                <option value="TEAM_MEMBER">Team Member</option>
-              </select>
-              <p
-                class="field__error"
-                data-error-for="signup-role"
-                aria-live="polite"
-              ></p>
-            </div>
-
-            <!-- Shown only when role = Team Member -->
-            <div class="field" data-specialization hidden>
-              <label for="signup-specialization">Specialization</label>
-              <select id="signup-specialization" name="specialization">
-                <option value="" disabled selected>
-                  Select your discipline
-                </option>
-                <option value="BACKEND">Backend</option>
-                <option value="FRONTEND">Frontend</option>
-                <option value="UI_UX">UI / UX</option>
-                <option value="QA">QA</option>
-                <option value="DEVOPS">DevOps</option>
-              </select>
-              <p
-                class="field__error"
-                data-error-for="signup-specialization"
-                aria-live="polite"
-              ></p>
-            </div>
-
+            <!-- Roles are assigned per project by each project's Scrum Master,
+                 not at signup. -->
             <button type="submit" class="btn btn--primary btn--block">
               Create Account
             </button>

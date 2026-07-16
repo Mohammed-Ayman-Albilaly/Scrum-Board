@@ -1,8 +1,8 @@
 // Board orchestrator: loads the current user + board data and renders the
 // three regions (backlog | sprints | deployed) plus the ceremonies panel.
 import { api, el, toast, setProjectId } from "./utils.js";
-import { dangerDialog, inputDialog } from "./dialog.js";
-import { can, ROLE_LABELS } from "./permissions.js";
+import { customDialog, dangerDialog, inputDialog } from "./dialog.js";
+import { can, ROLES, ROLE_LABELS } from "./permissions.js";
 import { renderStoryCard } from "./cards.js";
 import { renderCeremoniesPanel } from "./ceremonies.js";
 
@@ -38,7 +38,8 @@ async function load() {
     api("/users"),
   ]);
   const ctx = {
-    role: me.role,
+    // The caller's roles in the ACTIVE project (multi-role; permission = union).
+    roles: projects.find((p) => p.id === activeProjectId)?.roles ?? [],
     projects,
     activeProjectId,
     sprints: board.sprints,
@@ -69,7 +70,9 @@ function header(me, ctx) {
     projectBar(ctx),
     el("div", { class: "app-header__user" }, [
       el("span", { class: "user-name", text: me.name }),
-      el("span", { class: "badge badge--ready", text: ROLE_LABELS[me.role] ?? me.role }),
+      ...(ctx.roles.length
+        ? ctx.roles.map((r) => el("span", { class: "badge badge--ready", text: ROLE_LABELS[r] ?? r }))
+        : [el("span", { class: "badge badge--unrefined", text: "Member" })]),
       logout,
     ]),
   ]);
@@ -79,9 +82,13 @@ function projectBar(ctx) {
   const select = el("select", { class: "card__control", title: "Active project",
     onchange: (e) => switchProject(e.target.value) },
     ctx.projects.map((p) => el("option", { value: p.id, text: p.name, selected: p.id === ctx.activeProjectId })));
-  const create = el("button", { class: "btn btn--ghost btn--sm", text: "+ Project", onclick: createProjectFlow });
-  const invite = el("button", { class: "btn btn--ghost btn--sm", text: "Invite", onclick: () => inviteFlow(ctx) });
-  return el("div", { class: "project-bar" }, [el("span", { class: "muted", text: "Project" }), select, create, invite]);
+  const children = [el("span", { class: "muted", text: "Project" }), select,
+    el("button", { class: "btn btn--ghost btn--sm", text: "+ Project", onclick: createProjectFlow })];
+  if (can.manageMembers(ctx.roles)) {
+    children.push(el("button", { class: "btn btn--ghost btn--sm", text: "Invite", onclick: () => inviteFlow(ctx) }));
+    children.push(el("button", { class: "btn btn--ghost btn--sm", text: "Members", onclick: () => membersFlow(ctx) }));
+  }
+  return el("div", { class: "project-bar" }, children);
 }
 
 function switchProject(id) {
@@ -104,11 +111,28 @@ async function createProjectFlow() {
   }
 }
 
+// Checkbox row for the three project roles; returns the node + a reader for
+// the currently checked set.
+function roleChecklist(selected = []) {
+  const boxes = Object.values(ROLES).map((role) => {
+    const box = el("input", { type: "checkbox", value: role });
+    box.checked = selected.includes(role);
+    return { role, box };
+  });
+  const node = el("div", { class: "role-checks" },
+    boxes.map(({ role, box }) => el("label", { class: "role-checks__item" }, [box, el("span", { text: ROLE_LABELS[role] })])));
+  return { node, getRoles: () => boxes.filter((b) => b.box.checked).map((b) => b.role) };
+}
+
 async function inviteFlow(ctx) {
-  const email = await inputDialog({ title: "Invite teammate", body: "Invite a teammate to this project by email.", placeholder: "email@example.com", confirmText: "Invite" });
-  if (!email || !email.trim()) return;
+  const email = el("input", { class: "field-input", type: "email", placeholder: "email@example.com" });
+  const roles = roleChecklist([ROLES.TEAM_MEMBER]);
+  const content = el("div", { class: "stack" }, [email, roles.node]);
+  const ok = await customDialog({ title: "Invite teammate", body: "Invite an existing user to this project and pick their role(s).", content, confirmText: "Invite" });
+  if (!ok || !email.value.trim()) return;
+  if (!roles.getRoles().length) return toast("Pick at least one role.", "error");
   try {
-    await api(`/projects/${ctx.activeProjectId}/members`, { method: "POST", body: { email: email.trim() } });
+    await api(`/projects/${ctx.activeProjectId}/members`, { method: "POST", body: { email: email.value.trim(), roles: roles.getRoles() } });
     await load();
     toast("Member added", "success");
   } catch (err) {
@@ -116,9 +140,37 @@ async function inviteFlow(ctx) {
   }
 }
 
+// SM-only: review every member's roles and save the changed ones.
+async function membersFlow(ctx) {
+  const rows = ctx.members.map((m) => ({ member: m, checks: roleChecklist(m.roles ?? []) }));
+  const content = el("div", { class: "stack" }, rows.map(({ member, checks }) =>
+    el("div", { class: "member-row" }, [el("span", { class: "member-row__name", text: member.name }), checks.node])));
+  const ok = await customDialog({ title: "Project members", body: "Adjust each member's role(s) in this project.", content, confirmText: "Save changes" });
+  if (!ok) return;
+  const changed = rows.filter(({ member, checks }) => {
+    const next = checks.getRoles();
+    const prev = member.roles ?? [];
+    return next.length !== prev.length || next.some((r) => !prev.includes(r));
+  });
+  if (changed.some(({ checks }) => !checks.getRoles().length)) {
+    return toast("Each member needs at least one role.", "error");
+  }
+  try {
+    for (const { member, checks } of changed) {
+      await api(`/projects/${ctx.activeProjectId}/members/${member.id}/roles`, { method: "PATCH", body: { roles: checks.getRoles() } });
+    }
+    if (changed.length) {
+      await load();
+      toast("Roles updated", "success");
+    }
+  } catch (err) {
+    toast(err.message, "error");
+  }
+}
+
 function backlogPanel(stories, ctx) {
   const children = [el("h2", { class: "panel__title", text: "Product Backlog" })];
-  if (can.editBacklog(ctx.role)) children.push(newStoryForm(ctx));
+  if (can.editBacklog(ctx.roles)) children.push(newStoryForm(ctx));
   children.push(el("div", { class: "stack" }, stories.length
     ? stories.map((s, i) => renderStoryCard(s, ctx, { first: i === 0, last: i === stories.length - 1 }))
     : [empty("No stories yet.")]));
@@ -144,7 +196,7 @@ async function submitStory(input, ctx) {
 
 function sprintsPanel(sprints, ctx) {
   const children = [el("h2", { class: "panel__title", text: "Sprints" })];
-  if (can.manageSprints(ctx.role)) children.push(newSprintForm(ctx));
+  if (can.manageSprints(ctx.roles)) children.push(newSprintForm(ctx));
   if (!sprints.length) children.push(empty("No sprints yet."));
   for (const sp of sprints) children.push(sprintBlock(sp, ctx));
   return el("section", { class: "panel panel--sprints" }, children);
@@ -193,7 +245,7 @@ function sprintBlock(sp, ctx) {
   if (sp.goal) head.push(el("span", { class: "muted", text: sp.goal }));
   const range = sprintDateRange(sp);
   if (range) head.push(el("span", { class: "sprint__dates muted", text: range }));
-  if (can.manageSprints(ctx.role) && sp.status === "ACTIVE") {
+  if (can.manageSprints(ctx.roles) && sp.status === "ACTIVE") {
     head.push(el("button", { class: "btn btn--ghost btn--sm", text: "Close sprint", onclick: async () => {
       const ok = await dangerDialog({ title: "Close sprint", body: `Close ${sp.name}? Its columns lock and this cannot be undone.`, confirmText: "Close sprint" });
       if (ok) closeSprint(sp.id, ctx);

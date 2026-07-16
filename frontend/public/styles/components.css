@@ -203,6 +203,35 @@
   margin-top: 0.25rem;
 }
 
+/* ---- Role checklists (invite / members dialogs) ---- */
+.role-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.role-checks__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.member-row__name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
 /* ---- Form-level note (success / info messages) ---- */
 .form-note {
   font-size: 0.85rem;

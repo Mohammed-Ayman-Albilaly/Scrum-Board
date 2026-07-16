@@ -3,7 +3,6 @@
 
 "use strict";
 
-const TEAM_MEMBER_ROLE = "TEAM_MEMBER";
 const MIN_PASSWORD_LENGTH = 8;
 const BOARD_URL = "/board.html";
 const ENDPOINTS = { "panel-login": "/auth/login", "panel-signup": "/auth/signup" };
@@ -20,17 +19,6 @@ function activateTab(target) {
     form.classList.toggle("is-active", isActive);
     form.hidden = !isActive;
   });
-}
-
-/** Show or hide the specialization field based on the selected role. */
-function toggleSpecialization(role) {
-  const wrapper = document.querySelector("[data-specialization]");
-  const select = document.getElementById("signup-specialization");
-  if (!wrapper || !select) return;
-  const isTeamMember = role === TEAM_MEMBER_ROLE;
-  wrapper.hidden = !isTeamMember;
-  select.required = isTeamMember;
-  if (!isTeamMember) select.value = "";
 }
 
 /** Set or clear the inline error message for a single field. */
@@ -140,16 +128,11 @@ async function handleSubmit(event) {
   }
 }
 
-/** Wire up tab clicks, role changes, and form submissions. */
+/** Wire up tab clicks and form submissions. */
 function init() {
   document.querySelectorAll(".auth-tab").forEach((tab) => {
     tab.addEventListener("click", () => activateTab(tab.dataset.target));
   });
-
-  const roleSelect = document.getElementById("signup-role");
-  if (roleSelect) {
-    roleSelect.addEventListener("change", (e) => toggleSpecialization(e.target.value));
-  }
 
   document.querySelectorAll(".auth-form").forEach((form) => {
     form.addEventListener("submit", handleSubmit);
