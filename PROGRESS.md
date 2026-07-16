@@ -47,7 +47,7 @@ earlier entry predated that commit; the table below reflects what is genuinely o
 | CI pipeline | — | — | — | — | ✅ `.github/workflows/ci.yml` (typecheck + test) |
 | **Dialog system** (replaces native confirm/prompt) | ✅ (`dialog.js`, 5 call sites swapped) | — | ✅ `security-review-dialog-system.md` | ✅ suite green 63/63 + manual checklist | 🟡 (pending push) |
 | **Per-project roles** (multi-role, union perms) | ✅ (signup slimmed; `ctx.roles`; invite+members dialogs) | ✅ (`project_member_role`, migration 0004 w/ data copy, `requireRole` union check, SM-only invite + `PATCH roles`) | ✅ `security-review-per-project-roles.md` | ✅ `roles.test.ts` (9) — 71/71 | 🟡 (pending push) |
-| **Dashboard / profile / contacts / avatar** | ✅ (dashboard.html + profile.html + header.js w/ avatar popover; login → /dashboard.html; board reads `?projectId=`) | ✅ (`GET /users/contacts` derived from shared memberships; `PATCH /users/me` specialization-only) | ⬜ | ⬜ | ⬜ |
+| **Dashboard / profile / contacts / avatar** | ✅ (dashboard.html + profile.html + header.js w/ avatar popover; login → /dashboard.html; board reads `?projectId=`) | ✅ (`GET /users/contacts` derived from shared memberships; `PATCH /users/me` specialization-only) | ✅ `security-review-dashboard-profile.md` | ✅ `contacts.test.ts` (4) + `profile.test.ts` (6) — 81/81 | 🟡 (pending push) |
 
 **Multi-project (done 2026-07-15):** every user auto-enrolls in the shared `Team Project` on
 signup and can create more projects or invite existing users by email. A `project_member` join
@@ -84,8 +84,14 @@ refitted (fixtures carry `roles` arrays; `signIn` grants them via direct DB inse
 **Change 1 complete through QA**: security review committed
 (`security-review-per-project-roles.md`) and `roles.test.ts` adds 9 tests (founder
 bootstrap, SM-only invites + PATCH roles incl. cross-project 403s, role-set validation,
-union permissions, per-project scoping) — **71/71 green**. ⚠️ Run `pnpm db:migrate`
-after pulling. Next: Change 2 (dashboard/profile/contacts/avatar). Everything above is committed **and pushed to `origin/main`**
+union permissions, per-project scoping). ⚠️ Run `pnpm db:migrate` after pulling.
+
+**Change 2 (dashboard/profile/contacts/avatar) complete through QA**: post-login lands on
+`/dashboard.html` (project cards + roles, Create Project, profile + contacts panels);
+`/profile.html` edits specialization via `PATCH /users/me`; shared `header.js` renders the
+avatar + hover popover on board/dashboard/profile; board opens via `?projectId=`.
+Contacts derived from shared memberships (`GET /users/contacts`), private projects don't
+leak (tested). **81/81 green.** Next: Change 3 (logout → popover/profile, slim header). Everything above is committed **and pushed to `origin/main`**
 on 2026-07-16. **Verified green locally on 2026-07-15** with a portable Node + pnpm 9.15.0,
 and additionally **exercised live in a browser** against the running dev server (project switch,
 sprint dates on the header, backlog reorder, structured Planning + Retro rendering):
