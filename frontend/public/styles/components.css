@@ -158,6 +158,51 @@
   cursor: not-allowed;
 }
 
+.btn--danger {
+  background: var(--color-danger);
+  color: var(--color-text-invert);
+}
+
+.btn--danger:hover {
+  background: var(--color-error);
+}
+
+/* ---- Dialogs (see scripts/dialog.js) ---- */
+.dialog {
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card-lg);
+  padding: 0; /* form owns the padding so backdrop-click detection works */
+  width: min(420px, calc(100vw - 2rem));
+}
+
+.dialog::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.dialog__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.dialog__title {
+  font-size: 1.15rem;
+}
+
+.dialog__body {
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+}
+
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
 /* ---- Form-level note (success / info messages) ---- */
 .form-note {
   font-size: 0.85rem;

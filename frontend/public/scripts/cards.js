@@ -1,6 +1,7 @@
 // Story card rendering + inline actions. Controls shown depend on role and
 // placement; the server is the real authority on every mutation.
 import { api, el, toast } from "./utils.js";
+import { dangerDialog, inputDialog } from "./dialog.js";
 import { can, SPECIALIZATION_LABELS } from "./permissions.js";
 
 const COLUMN_ORDER = ["SPRINT_BACKLOG", "UNDER_DEVELOPMENT", "UNDER_TESTING", "DEPLOYED"];
@@ -47,15 +48,18 @@ function backlogControls(story, ctx, opts) {
     [el("option", { value: "", text: "Backlog" }), ...ctx.activeSprints.map((s) => el("option", { value: s.id, text: s.name }))]);
   const edit = el("button", { class: "btn btn--ghost btn--sm", text: "✎", title: "Rename", onclick: () => renameStory(story, ctx) });
   const del = el("button", { class: "btn btn--ghost btn--sm", text: "🗑", title: "Delete",
-    onclick: () => confirm("Delete this story?") && run(() => api(`/stories/${story.id}`, { method: "DELETE" }), ctx) });
+    onclick: async () => {
+      const ok = await dangerDialog({ title: "Delete story", body: "Delete this story? This cannot be undone.", confirmText: "Delete" });
+      if (ok) run(() => api(`/stories/${story.id}`, { method: "DELETE" }), ctx);
+    } });
   const reorder = (direction) => run(() => api(`/stories/${story.id}/reorder`, { method: "PATCH", body: { direction } }), ctx);
   const up = el("button", { class: "btn btn--ghost btn--sm", text: "▲", title: "Move up", disabled: opts.first, onclick: () => reorder("UP") });
   const down = el("button", { class: "btn btn--ghost btn--sm", text: "▼", title: "Move down", disabled: opts.last, onclick: () => reorder("DOWN") });
   return el("div", { class: "card__controls" }, [up, down, status, points, assign, edit, del]);
 }
 
-function renameStory(story, ctx) {
-  const title = window.prompt("Story title", story.title);
+async function renameStory(story, ctx) {
+  const title = await inputDialog({ title: "Rename story", defaultValue: story.title });
   if (title && title.trim()) run(() => api(`/stories/${story.id}`, { method: "PATCH", body: { title: title.trim() } }), ctx);
 }
 

@@ -1,6 +1,7 @@
 // Board orchestrator: loads the current user + board data and renders the
 // three regions (backlog | sprints | deployed) plus the ceremonies panel.
 import { api, el, toast, setProjectId } from "./utils.js";
+import { dangerDialog, inputDialog } from "./dialog.js";
 import { can, ROLE_LABELS } from "./permissions.js";
 import { renderStoryCard } from "./cards.js";
 import { renderCeremoniesPanel } from "./ceremonies.js";
@@ -90,7 +91,7 @@ function switchProject(id) {
 }
 
 async function createProjectFlow() {
-  const name = window.prompt("New project name");
+  const name = await inputDialog({ title: "New project", placeholder: "Project name", confirmText: "Create" });
   if (!name || !name.trim()) return;
   try {
     const { project } = await api("/projects", { method: "POST", body: { name: name.trim() } });
@@ -104,7 +105,7 @@ async function createProjectFlow() {
 }
 
 async function inviteFlow(ctx) {
-  const email = window.prompt("Invite a teammate by email");
+  const email = await inputDialog({ title: "Invite teammate", body: "Invite a teammate to this project by email.", placeholder: "email@example.com", confirmText: "Invite" });
   if (!email || !email.trim()) return;
   try {
     await api(`/projects/${ctx.activeProjectId}/members`, { method: "POST", body: { email: email.trim() } });
@@ -193,7 +194,10 @@ function sprintBlock(sp, ctx) {
   const range = sprintDateRange(sp);
   if (range) head.push(el("span", { class: "sprint__dates muted", text: range }));
   if (can.manageSprints(ctx.role) && sp.status === "ACTIVE") {
-    head.push(el("button", { class: "btn btn--ghost btn--sm", text: "Close sprint", onclick: () => confirm(`Close ${sp.name}? Its columns lock.`) && closeSprint(sp.id, ctx) }));
+    head.push(el("button", { class: "btn btn--ghost btn--sm", text: "Close sprint", onclick: async () => {
+      const ok = await dangerDialog({ title: "Close sprint", body: `Close ${sp.name}? Its columns lock and this cannot be undone.`, confirmText: "Close sprint" });
+      if (ok) closeSprint(sp.id, ctx);
+    } }));
   }
   const cols = el("div", { class: "sprint__cols" }, SPRINT_COLS.map(([key, label]) => {
     const items = sp.columns?.[key] ?? [];
