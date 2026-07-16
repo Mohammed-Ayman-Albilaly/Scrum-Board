@@ -15,9 +15,11 @@ import { ceremonyRoutes } from "./features/ceremonies/routes.js";
 import { userRoutes } from "./features/users/routes.js";
 import { projectRoutes } from "./features/projects/routes.js";
 
-const frontendDir = path.resolve(
-  fileURLToPath(new URL("../../frontend/public", import.meta.url)),
-);
+// FRONTEND_DIR overrides the default so deploy environments can point at a
+// different layout than local dev's backend/dist -> repo-root/frontend/public.
+const frontendDir =
+  process.env.FRONTEND_DIR ??
+  path.resolve(fileURLToPath(new URL("../../frontend/public", import.meta.url)));
 
 export function createApp(): Express {
   const app = express();
