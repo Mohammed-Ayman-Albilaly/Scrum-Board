@@ -250,10 +250,16 @@ function sprintBlock(sp, ctx) {
   if (sp.goal) head.push(el("span", { class: "muted", text: sp.goal }));
   const range = sprintDateRange(sp);
   if (range) head.push(el("span", { class: "sprint__dates muted", text: range }));
-  if (can.manageSprints(ctx.roles) && sp.status === "ACTIVE") {
-    head.push(el("button", { class: "btn btn--ghost btn--sm", text: "Close sprint", onclick: async () => {
-      const ok = await dangerDialog({ title: "Close sprint", body: `Close ${sp.name}? Its columns lock and this cannot be undone.`, confirmText: "Close sprint" });
-      if (ok) closeSprint(sp.id, ctx);
+  if (can.manageSprints(ctx.roles)) {
+    if (sp.status === "ACTIVE") {
+      head.push(el("button", { class: "btn btn--ghost btn--sm", text: "Close sprint", onclick: async () => {
+        const ok = await dangerDialog({ title: "Close sprint", body: `Close ${sp.name}? Its columns lock and this cannot be undone.`, confirmText: "Close sprint" });
+        if (ok) closeSprint(sp.id, ctx);
+      } }));
+    }
+    head.push(el("button", { class: "btn btn--ghost btn--sm", type: "button", text: "Delete sprint", onclick: async () => {
+      const ok = await dangerDialog({ title: "Delete sprint", body: `Delete ${sp.name}? This cannot be undone. Move its stories back to the backlog first if it has any.`, confirmText: "Delete sprint" });
+      if (ok) deleteSprintFlow(sp.id, ctx);
     } }));
   }
   const cols = el("div", { class: "sprint__cols" }, SPRINT_COLS.map(([key, label, slug]) => {
@@ -273,6 +279,16 @@ async function closeSprint(id, ctx) {
   try {
     await api(`/sprints/${id}/close`, { method: "PATCH" });
     await ctx.reload();
+  } catch (err) {
+    toast(err.message, "error");
+  }
+}
+
+async function deleteSprintFlow(id, ctx) {
+  try {
+    await api(`/sprints/${id}`, { method: "DELETE" });
+    await ctx.reload();
+    toast("Sprint deleted", "success");
   } catch (err) {
     toast(err.message, "error");
   }

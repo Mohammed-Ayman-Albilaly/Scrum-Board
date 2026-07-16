@@ -45,10 +45,12 @@ earlier entry predated that commit; the table below reflects what is genuinely o
 | Global Deployed list | ✅ (`deployedPanel`) | ✅ (part of `GET /board`) | ✅ | ✅ `board.test.ts` (backlog→deployed flow) | ✅ |
 | Story assignees (`GET /users` + `PATCH /stories/:id/assign`) | ✅ (tag + PO picker) | ✅ (assignee must be project member) | ✅ `docs/security-review-assignees.md` | ✅ `assignees.test.ts` (8) | ✅ |
 | CI pipeline | — | — | — | — | ✅ `.github/workflows/ci.yml` (typecheck + test) |
-| **Dialog system** (replaces native confirm/prompt) | ✅ (`dialog.js`, 5 call sites swapped) | — | ✅ `security-review-dialog-system.md` | ✅ suite green 63/63 + manual checklist | 🟡 (pending push) |
-| **Per-project roles** (multi-role, union perms) | ✅ (signup slimmed; `ctx.roles`; invite+members dialogs) | ✅ (`project_member_role`, migration 0004 w/ data copy, `requireRole` union check, SM-only invite + `PATCH roles`) | ✅ `security-review-per-project-roles.md` | ✅ `roles.test.ts` (9) — 71/71 | 🟡 (pending push) |
-| **Dashboard / profile / contacts / avatar** | ✅ (dashboard.html + profile.html + header.js w/ avatar popover; login → /dashboard.html; board reads `?projectId=`) | ✅ (`GET /users/contacts` derived from shared memberships; `PATCH /users/me` specialization-only) | ✅ `security-review-dashboard-profile.md` | ✅ `contacts.test.ts` (4) + `profile.test.ts` (6) — 81/81 | 🟡 (pending push) |
-| **Slim header + logout relocation** | ✅ (logout only in popover + profile, red `--color-danger`; header = brand·project·avatar; project bar → toolbar) | — | ✅ `security-review-header-logout.md` | ✅ suite green 81/81 + manual checklist | 🟡 (pending push) |
+| **Dialog system** (replaces native confirm/prompt) | ✅ (`dialog.js`, 5 call sites swapped) | — | ✅ `security-review-dialog-system.md` | ✅ suite green 63/63 + manual checklist | ✅ |
+| **Per-project roles** (multi-role, union perms) | ✅ (signup slimmed; `ctx.roles`; invite+members dialogs) | ✅ (`project_member_role`, migration 0004 w/ data copy, `requireRole` union check, SM-only invite + `PATCH roles`) | ✅ `security-review-per-project-roles.md` | ✅ `roles.test.ts` (9) | ✅ |
+| **Dashboard / profile / contacts / avatar** | ✅ (dashboard.html + profile.html + header.js w/ avatar popover; login → /dashboard.html; board reads `?projectId=`) | ✅ (`GET /users/contacts` derived from shared memberships; `PATCH /users/me` specialization-only) | ✅ `security-review-dashboard-profile.md` | ✅ `contacts.test.ts` (4) + `profile.test.ts` (6) | ✅ |
+| **Slim header + logout relocation** | ✅ (logout only in popover + profile, red `--color-danger`; header = brand·project·avatar; project bar → toolbar) | — | ✅ `security-review-header-logout.md` | ✅ suite green + manual checklist | ✅ |
+| **Double-submit fix** (story/sprint/ceremony create buttons) | ✅ (untyped submit buttons were firing onclick AND the form's native submit) | — | — (frontend-only, no RBAC/data-shape change) | ✅ suite green + browser-verified (click and Enter-key paths, both localhost and confirmed present in the live Railway bundle) | ✅ |
+| **Sprint deletion** (SM-only, e.g. to remove a duplicate) | ✅ (`Delete sprint` button + danger dialog next to Close sprint) | ✅ `DELETE /sprints/:id` — SM-only, project-scoped, 409 if the sprint still has stories, cascades its ceremony logs | — (reasoning below; revisit if scope grows) | ✅ `sprint_delete.test.ts` (7) | ✅ |
 
 **Multi-project (done 2026-07-15):** every user auto-enrolls in the shared `Team Project` on
 signup and can create more projects or invite existing users by email. A `project_member` join
@@ -63,65 +65,34 @@ MVP choice — switching would discard the working, reviewed auth stack.
 
 ## In progress / uncommitted right now
 
-**2026-07-16 — 4-change feature set underway** (approved plan: dialog system → per-project
-roles → dashboard/profile → header/logout cleanup, each via the 5-stage pipeline).
-**Change 4 (dialog system) complete through QA**: `scripts/dialog.js`
-(confirm/danger/input/custom variants, native `<dialog>`-based); all 5 native
-`confirm()`/`prompt()` call sites replaced. Backend suite unaffected — typecheck clean +
-63/63 tests green on 2026-07-16. Manual dialog checklist (delete story, rename story,
-create project, invite member, close sprint, plus Esc/cancel/backdrop paths) to be
-exercised in-browser alongside Change 1's board work.
+Nothing in flight. The 2026-07-16 four-change feature set (dialog system → per-project
+roles → dashboard/profile/contacts/avatar → slim header/logout) is code-complete,
+security-reviewed, tested, and **pushed to `origin/main`** (verified: `git log
+origin/main..HEAD` is empty). Two follow-up fixes landed the same day after a user report
+against the live Railway deployment: the story/sprint/ceremony create buttons were
+double-submitting (untyped `<button>` inside a `<form>` defaults to `type="submit"`,
+so one click fired both its own `onclick` and the form's native submit — fixed by marking
+those buttons `type="button"`), and Scrum Masters can now delete a sprint (`DELETE
+/sprints/:id`, blocked with 409 while it still has stories) so leftover duplicates from
+before the double-submit fix can be cleaned up.
 
-**Change 1 (per-project roles), frontend + backend stages committed.** Roles now live in
-`project_member_role` (PK project+user+role; multi-role; permissions = union).
-`user.role` is DROPPED by migration 0004, which first copies each member's global role
-into a role row for every project they belong to (data-copy ordering verified by dry-run:
-INSERT…SELECT runs before the column drop; role-row count == membership count).
-`requireProjectMember` pins `req.projectRoles`; `requireRole` checks the union against it
-(all 5 gate sites unchanged). Signup takes name/email/password only and enrolls into the
-default project as TEAM_MEMBER; project creators (founders) get SCRUM_MASTER; invites +
-role edits (`PATCH /projects/:id/members/:userId/roles`) are SM-only. Test harness
-refitted (fixtures carry `roles` arrays; `signIn` grants them via direct DB insert).
-**Change 1 complete through QA**: security review committed
-(`security-review-per-project-roles.md`) and `roles.test.ts` adds 9 tests (founder
-bootstrap, SM-only invites + PATCH roles incl. cross-project 403s, role-set validation,
-union permissions, per-project scoping). ⚠️ Run `pnpm db:migrate` after pulling.
+⚠️ **Run `pnpm db:migrate` after pulling** — migration 0004 (per-project roles) must run
+before the app will boot against an older `dev.db`.
 
-**Change 2 (dashboard/profile/contacts/avatar) complete through QA**: post-login lands on
-`/dashboard.html` (project cards + roles, Create Project, profile + contacts panels);
-`/profile.html` edits specialization via `PATCH /users/me`; shared `header.js` renders the
-avatar + hover popover on board/dashboard/profile; board opens via `?projectId=`.
-Contacts derived from shared memberships (`GET /users/contacts`), private projects don't
-leak (tested). **81/81 green.**
-
-**Change 3 (slim header + logout relocation) complete.** Logout now lives ONLY in the
-avatar popover (all pages) and on the profile page, styled `--color-danger` (#EF4444);
-the header shows brand + current project name + avatar; the project switcher +
-Invite/Members buttons moved to a toolbar under the board header.
-
-**All four approved changes (4 → 1 → 2 → 3) are code-complete, security-reviewed, and
-green (81/81).** Manual browser checklist still to exercise in one pass (dialog flows,
-dashboard→board?projectId=, popover roles per project, logout placements) — do this
-before calling the milestone shipped. Everything above is committed **and pushed to `origin/main`**
-on 2026-07-16. **Verified green locally on 2026-07-15** with a portable Node + pnpm 9.15.0,
-and additionally **exercised live in a browser** against the running dev server (project switch,
-sprint dates on the header, backlog reorder, structured Planning + Retro rendering):
-
-- `pnpm --filter backend typecheck` — exit 0, no type errors
-- `pnpm --filter backend test` — **81/81 passing** across 11 files: `auth` 12, `board` 12,
-  `roles` 9, `projects` 8, `assignees` 8, `ceremonies` 7, `permissions` 6, `profile` 6,
-  `reorder` 5, `contacts` 4, `sprint_dates` 4 (re-verified 2026-07-16; earlier chains recorded
-  63/8 before the per-project-roles + dashboard/profile/contacts work landed)
+**Latest local verification (2026-07-16):** `pnpm --filter backend typecheck` — exit 0.
+`pnpm --filter backend test` — **88/88 passing** across 12 files (`auth` 12, `board` 12,
+`roles` 9, `projects` 8, `assignees` 8, `ceremonies` 7, `permissions` 6, `profile` 6,
+`sprint_delete` 7, `reorder` 5, `contacts` 4, `sprint_dates` 4). Additionally
+browser-verified end-to-end against the running dev server with a headless Playwright
+session (not just the test suite): one click / one Enter-press creates exactly one
+story or sprint; the delete-sprint button + danger dialog removes a sprint from the DOM.
+The double-submit fix was also confirmed present in the **live Railway bundle** by
+fetching the deployed `scripts/board.js` directly.
 
 (The auth negative-path tests emit expected `Invalid password` / `User not found` warnings
 from Better Auth — those are asserted-for behavior, not failures.)
 
-**Pushed + CI green:** all assignee / sprint-date / reorder / structured-ceremony / multi-project
-work is on `origin/main`, and the GitHub Actions `CI` run for the head commit is **green**
-(install → typecheck → `vitest run`, 63/63). Note: CI had been red on every prior run — including
-the baseline `95920ab` — because the workflow pinned `version: 9` while `package.json` already
-declares `packageManager: pnpm@9.15.0`, so `pnpm/action-setup@v4` aborted at the *Install pnpm*
-step. Fixed by dropping the explicit `version:` input.
+**CI:** GitHub Actions is green on `origin/main` (install → typecheck → `vitest run`).
 
 ## Known gaps / next candidates
 
@@ -135,6 +106,13 @@ Every PRD feature is now implemented. Remaining items are refinements, not missi
   invite + `PATCH /projects/:id/members/:userId/roles`, role-less signup, union permissions.
   Covered by `roles.test.ts` (9). Also added: dashboard + profile (`PATCH /users/me`) and a
   contacts directory (`GET /users/contacts`).
+- ~~**Sprint deletion**~~ **Done 2026-07-16** — `DELETE /sprints/:id`, SM-only, refuses
+  (409) while the sprint still has stories (move them back to the backlog first) so no
+  story data is silently discarded; ceremony logs tied to the sprint are dropped with it.
+  Not formally security-reviewed as its own doc — same guard chain (`requireProjectMember`
+  → `requireRole(SCRUM_MASTER)`, project-scoped lookup) as the existing close-sprint route,
+  plus the story-count check; revisit with a dedicated review if the delete surface grows
+  (e.g. a force-delete-with-stories option).
 - **Multiple assignees.** Single `assigneeId` today; "Assignee(s)" hints at multiple (needs a
   story⇄user junction table).
 - **"Last SM" guard.** An SM can demote the project's only SM, freezing member management (noted

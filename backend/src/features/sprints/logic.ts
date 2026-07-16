@@ -1,10 +1,12 @@
 // Sprint lifecycle logic. Only the Scrum Master reaches these (enforced at route).
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, count, eq } from "drizzle-orm";
 import { db } from "../../config/db.js";
 import { sprint } from "./schema.js";
+import { story } from "../stories/schema.js";
+import { ceremony } from "../ceremonies/schema.js";
 import { newId } from "../../lib/id.js";
 import { sanitizeText } from "../../lib/sanitize.js";
-import { NotFoundError, ValidationError } from "../../lib/errors.js";
+import { NotFoundError, ValidationError, ConflictError } from "../../lib/errors.js";
 import { SPRINT_STATUSES } from "../../config/constants.js";
 import type { CreateSprintInput } from "./validation.js";
 
@@ -72,4 +74,30 @@ export async function closeSprint(id: string, projectId: string) {
     .set({ status: SPRINT_STATUSES.CLOSED, updatedAt: new Date() })
     .where(eq(sprint.id, id));
   return serializeSprint({ ...row, status: SPRINT_STATUSES.CLOSED });
+}
+
+/**
+ * Delete a sprint (open or closed) — e.g. to remove an accidental duplicate.
+ * Refuses if the sprint still has stories (move or remove them first) so no
+ * work item silently disappears. Ceremony logs tied to the sprint are
+ * dropped with it; SQLite FK actions aren't enforced at runtime here
+ * (no PRAGMA foreign_keys=ON), so both steps are explicit in one transaction.
+ */
+export async function deleteSprint(id: string, projectId: string): Promise<void> {
+  const [row] = await db
+    .select({ id: sprint.id })
+    .from(sprint)
+    .where(and(eq(sprint.id, id), eq(sprint.projectId, projectId)))
+    .limit(1);
+  if (!row) throw new NotFoundError("Sprint not found.");
+
+  const [{ value }] = await db.select({ value: count() }).from(story).where(eq(story.sprintId, id));
+  if (value > 0) {
+    throw new ConflictError("Move this sprint's stories back to the backlog before deleting it.");
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.delete(ceremony).where(eq(ceremony.sprintId, id));
+    await tx.delete(sprint).where(eq(sprint.id, id));
+  });
 }

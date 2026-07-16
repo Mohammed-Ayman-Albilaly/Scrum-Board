@@ -9,7 +9,7 @@ import { sendData } from "../../lib/response.js";
 import { ROLES } from "../../config/constants.js";
 import { requireProjectMember } from "../projects/middleware.js";
 import { CreateSprintSchema } from "./validation.js";
-import { listSprints, createSprint, closeSprint } from "./logic.js";
+import { listSprints, createSprint, closeSprint, deleteSprint } from "./logic.js";
 
 export const sprintRoutes = Router();
 
@@ -39,6 +39,15 @@ sprintRoutes.post("/", ...sm, async (req, res, next) => {
 sprintRoutes.patch("/:id/close", ...sm, async (req, res, next) => {
   try {
     sendData(res, 200, { sprint: await closeSprint(param(req, "id"), req.projectId!) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+sprintRoutes.delete("/:id", ...sm, async (req, res, next) => {
+  try {
+    await deleteSprint(param(req, "id"), req.projectId!);
+    sendData(res, 200, { success: true });
   } catch (err) {
     next(err);
   }
